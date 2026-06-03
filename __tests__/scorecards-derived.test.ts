@@ -1,20 +1,20 @@
 import { describe, it, expect } from "vitest";
 
-import { type Candidate, type Scorecard } from "@/lib/schema";
+import { type VideoPlan, type Subtask } from "@/lib/schema";
 import {
   calculateAverageScore,
-  getCandidateAverageScore,
-  getCommentedScorecards,
-  getLatestDoneScorecard,
-  getScorecardsAverageScore,
-} from "@/lib/computed/scorecards";
+  getVideoPlanAverageScore,
+  getCommentedSubtasks,
+  getLatestDoneSubtask,
+  getSubtasksAverageScore,
+} from "@/lib/computed/subtasks";
 
-const baseScorecard = (over: Partial<Scorecard>): Scorecard => ({
-  stage: "screening",
-  label: "書類選考",
+const baseSubtask = (over: Partial<Subtask>): Subtask => ({
+  id: "st-test",
+  label: "構成メモ",
   date: "",
   format: "",
-  interviewer: "",
+  assignee: "",
   axisScores: {
     achievements: null,
     thinkingAbility: null,
@@ -60,61 +60,62 @@ describe("calculateAverageScore", () => {
   });
 });
 
-describe("getLatestDoneScorecard", () => {
+describe("getLatestDoneSubtask", () => {
   it("done が無ければ undefined", () => {
     const cards = [
-      baseScorecard({ stage: "screening", date: "2026-04-01" }),
-      baseScorecard({ stage: "first" }),
+      baseSubtask({ id: "a", date: "2026-04-01" }),
+      baseSubtask({ id: "b" }),
     ];
-    expect(getLatestDoneScorecard(cards)).toBeUndefined();
+    expect(getLatestDoneSubtask(cards)).toBeUndefined();
   });
 
-  it("配列末尾に近い done を返す（選考フローで最も進んだ評価）", () => {
+  it("配列末尾に近い done を返す", () => {
     const cards = [
-      baseScorecard({
-        stage: "screening",
+      baseSubtask({
+        id: "a",
         date: "2026-04-01",
-        decision: "通過",
+        decision: "完了",
       }),
-      baseScorecard({ stage: "first", date: "2026-04-10", decision: "通過" }),
-      baseScorecard({ stage: "second", date: "2026-04-20" }),
+      baseSubtask({
+        id: "b",
+        date: "2026-04-10",
+        decision: "完了",
+      }),
+      baseSubtask({ id: "c", date: "2026-04-20" }),
     ];
-    const latest = getLatestDoneScorecard(cards);
-    expect(latest?.stage).toBe("first");
+    const latest = getLatestDoneSubtask(cards);
+    expect(latest?.id).toBe("b");
   });
 });
 
-describe("getCandidateAverageScore / getScorecardsAverageScore", () => {
-  it("done scorecard が無ければ null", () => {
-    const candidate: Candidate = {
-      id: "c1",
+describe("getVideoPlanAverageScore / getSubtasksAverageScore", () => {
+  it("done subtask が無ければ null", () => {
+    const plan: VideoPlan = {
+      id: "v1",
       profile: {
-        name: "テスト 太郎",
-        birthday: "",
+        name: "テスト動画",
+        referenceUrl: "",
         source: "",
-        email: "",
-        phone: "",
-        address: "",
-        recruiter: "",
-        desiredSalaryMin: "",
-        desiredSalaryMax: "",
+        assignee: "",
+        priority: "",
         availableStartDate: "",
-        careerText: "",
-        motivationFull: "",
+        productionProgressNote: "",
+        outline: "",
+        descriptionNotes: "",
       },
-      scorecards: [],
-      stage: "screening",
+      subtasks: [],
+      stage: "idea",
       archived: false,
     };
-    expect(getCandidateAverageScore(candidate)).toBeNull();
-    expect(getScorecardsAverageScore([])).toBeNull();
+    expect(getVideoPlanAverageScore(plan)).toBeNull();
+    expect(getSubtasksAverageScore([])).toBeNull();
   });
 
   it("最新 done の axisScores を平均する", () => {
     const cards = [
-      baseScorecard({
-        stage: "screening",
-        decision: "通過",
+      baseSubtask({
+        id: "a",
+        decision: "完了",
         axisScores: {
           achievements: 5,
           thinkingAbility: 5,
@@ -122,9 +123,9 @@ describe("getCandidateAverageScore / getScorecardsAverageScore", () => {
           cultureFit: 5,
         },
       }),
-      baseScorecard({
-        stage: "first",
-        decision: "通過",
+      baseSubtask({
+        id: "b",
+        decision: "完了",
         axisScores: {
           achievements: 3,
           thinkingAbility: 3,
@@ -133,30 +134,30 @@ describe("getCandidateAverageScore / getScorecardsAverageScore", () => {
         },
       }),
     ];
-    expect(getScorecardsAverageScore(cards)).toBe(3);
+    expect(getSubtasksAverageScore(cards)).toBe(3);
   });
 });
 
-describe("getCommentedScorecards", () => {
-  it("done かつ comment 付きのみ STAGE_ORDER 順に返す", () => {
+describe("getCommentedSubtasks", () => {
+  it("done かつ comment 付きのみ返す", () => {
     const cards = [
-      baseScorecard({
-        stage: "first",
-        decision: "通過",
-        comment: "前向き",
+      baseSubtask({
+        id: "b",
+        decision: "完了",
+        comment: "台本OK",
       }),
-      baseScorecard({
-        stage: "screening",
-        decision: "通過",
-        comment: "書類良好",
+      baseSubtask({
+        id: "a",
+        decision: "完了",
+        comment: "フック案あり",
       }),
-      baseScorecard({
-        stage: "second",
+      baseSubtask({
+        id: "c",
         date: "2026-05-01",
         comment: "未確定だが期待",
       }),
     ];
-    const result = getCommentedScorecards(cards);
-    expect(result.map((c) => c.stage)).toEqual(["screening", "first"]);
+    const result = getCommentedSubtasks(cards);
+    expect(result.map((c) => c.id)).toEqual(["b", "a"]);
   });
 });

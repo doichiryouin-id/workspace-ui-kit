@@ -1,5 +1,5 @@
 /**
- * 採用管理ドメインの Zod スキーマと派生型。
+ * 動画企画管理ドメインの Zod スキーマと派生型（治療院 YouTube チャンネル向け）。
  * 雛形の SSoT として、UI コンポーネントはここから型をインポートする。
  *
  * 仕様の出典:
@@ -9,63 +9,45 @@
 
 import { z } from "zod";
 
-// ===== Pane 1: 部署 → ポジション 階層 =====
+// ===== Pane 1: チャンネル分類 → シリーズ 階層 =====
 
-/** 部署配下の単一ポジション。Pane 1 の階層 Sidebar に表示する単位。 */
-export const positionSchema = z.object({
+/** チャンネル分類配下のシリーズ。Pane 1 の階層 Sidebar に表示する単位。 */
+export const seriesSchema = z.object({
   id: z.string(),
   name: z.string(),
   count: z.number(),
 });
-export type Position = z.infer<typeof positionSchema>;
+export type Series = z.infer<typeof seriesSchema>;
 
-/** 部署と配下のポジション一覧。Pane 1 の階層 Sidebar の最上位単位。 */
-export const departmentSchema = z.object({
+/** チャンネル分類と配下のシリーズ一覧。Pane 1 の階層 Sidebar の最上位単位。 */
+export const channelSchema = z.object({
   id: z.string(),
   name: z.string(),
-  positions: z.array(positionSchema),
+  series: z.array(seriesSchema),
 });
-export type Department = z.infer<typeof departmentSchema>;
+export type Channel = z.infer<typeof channelSchema>;
 
-// ===== 候補者プロフィール =====
+// ===== 動画企画プロフィール（Pane 3） =====
 
-/**
- * 候補者プロフィール。Pane 3 ヘッダー帯トグル内 + 採用条件カードで表示・編集される。
- *
- * 構成: 12 フィールド（応募情報 3 / 連絡先 3 / 採用条件 3 / 読み物 2 / 採用担当 1）。
- *
- * ADR-0014「shadcn 標準フォームによる Pane 4 編集 UI」で Lab v3 の最小構成を採用し、
- * 旧 ADR-0010 §10 H の Profile 型を supersede。削除されたフィールド
- * (`initial` / `currentCompany` / `currentRole` / `nextActionDeadline` /
- * `otherCompanies` / `desiredSalary` / `age` / `experienceYears` / `applyPosition` /
- * `careerSummary` / `motivationSummary`) は「最小プロフィール」方針により撤去:
- *
- *   - `name[0]` 派生で avatar の頭文字を生成（`initial` 廃止）
- *   - `desiredSalary` は min/max に分割（`min`〜`max` 万円の構造化編集）
- *   - `age` は `birthday` から `calculateAge` で派生表示
- *   - 現職情報・経験年数は職務経歴 textarea に集約
- *   - サマリ系（`careerSummary` / `motivationSummary`）は full 文字列だけで運用
- */
-export const profileSchema = z.object({
+/** 動画企画の Pane 3 編集フィールド。 */
+export const videoPlanProfileSchema = z.object({
   name: z.string(),
-  birthday: z.string(),
+  /** ネタの元記事・論文・動画などの URL。貼り付けでメタデータ取得。 */
+  referenceUrl: z.string(),
   source: z.string(),
-  email: z.string(),
-  phone: z.string(),
-  address: z.string(),
-  recruiter: z.string(),
-  desiredSalaryMin: z.string(),
-  desiredSalaryMax: z.string(),
+  assignee: z.string(),
+  priority: z.string(),
   availableStartDate: z.string(),
-  careerText: z.string(),
-  motivationFull: z.string(),
+  /** 制作中のみ Pane 2 行に表示する進捗メモ（1 行）。 */
+  productionProgressNote: z.string(),
+  outline: z.string(),
+  descriptionNotes: z.string(),
 });
-export type Profile = z.infer<typeof profileSchema>;
+export type VideoPlanProfile = z.infer<typeof videoPlanProfileSchema>;
 
-// ===== 評価観点（4 軸固定、ADR-0005 §13 / design.md D57） =====
-// この雛形は 実績 / 思考力 / コミュニケーション / カルチャーフィット の 4 軸を採用する
+// ===== 制作チェック（4 軸。Pane 3 / 4 の評価 UI） =====
 
-/** 評価観点キー。Scorecard.axisScores のキーと一致する。 */
+/** 評価観点キー。Subtask.axisScores のキーと一致する。 */
 export const axisKeySchema = z.enum([
   "achievements",
   "thinkingAbility",
@@ -83,28 +65,19 @@ export const axisScoresSchema = z.object({
 });
 export type AxisScores = z.infer<typeof axisScoresSchema>;
 
-/** 評価観点の表示順。Pane 3 評価カードと Pane 4 モード 2 で共通に使う。 */
+/** 評価観点の表示順。Pane 3 / Pane 4 で共通に使う。 */
 export const AXIS_ORDER = axisKeySchema.options;
 
-// ===== 選考フロー =====
+// ===== 動画の状態（Pane 2 列）・サブタスク（Pane 3/4） =====
 
-/** 選考ステージのキー。`STAGE_ORDER` と一致する 4 段階。 */
-export const stageKeySchema = z.enum(["screening", "first", "second", "final"]);
+/** 動画企画の状態キー。`STAGE_ORDER` と一致する 3 段階。 */
+export const stageKeySchema = z.enum(["idea", "inProduction", "published"]);
 export type StageKey = z.infer<typeof stageKeySchema>;
 
-/** ステージの実施ステータス。done = 実施済 / planned = 予定済 / pending = 未定。 */
+/** サブタスクの実施ステータス。done = 完了 / planned = 予定済 / pending = 未着手。 */
 export const stageStatusSchema = z.enum(["done", "planned", "pending"]);
 export type StageStatus = z.infer<typeof stageStatusSchema>;
 
-/**
- * 添付ファイル（Attachment）。Pane 4 モード 2 の「提出書類 / 文字起こし」両セクションで
- * 共通のファイル一覧として表示される（ADR-0010 §13 D75、ADR-0008 / ADR-0009 と整合）。
- *
- * `kind: "txt" | "pdf"` の discriminated union で、`txt` は `previewText` 必須、
- * `pdf` は持たない（雛形では PDF の中身プレビューはスコープ外。行は `disabled` で
- * 「プレビュー不可」バッジ表示、DL のみ可能）。`id` は React の `key` と一意性確保
- * のために必須。
- */
 const txtAttachmentSchema = z.object({
   id: z.string(),
   kind: z.literal("txt"),
@@ -124,99 +97,166 @@ export const attachmentSchema = z.discriminatedUnion("kind", [
 ]);
 export type Attachment = z.infer<typeof attachmentSchema>;
 
-/**
- * 選考ステージごとのスコアカード（メタ情報 + 評価 + コメント + 要約 + 添付）。
- *
- * ADR-0010 §13 D75 / ADR-0008 で「提出書類 / 文字起こし」を `attachments` 統一型に
- * 集約した。旧 `transcript?: string[]` / `documents?: Array<{ name; size }>` は
- * 削除済（互換層なし、KISS）。書類選考も面接も同じ `Attachment[]` を持ち、
- * UI 側（`AttachmentList`）で同型のファイル一覧として描画される。
- */
-export const scorecardSchema = z.object({
-  stage: stageKeySchema,
+/** サブタスク（台本・サムネ・概要欄等）。件数は動画ごとに自由。 */
+export const subtaskSchema = z.object({
+  id: z.string(),
   label: z.string(),
   date: z.string(),
   format: z.string(),
-  interviewer: z.string(),
+  assignee: z.string(),
   decision: z.string().optional(),
   comment: z.string().optional(),
   summary: z.string().optional(),
   axisScores: axisScoresSchema,
   attachments: z.array(attachmentSchema),
 });
-export type Scorecard = z.infer<typeof scorecardSchema>;
+export type Subtask = z.infer<typeof subtaskSchema>;
 
 /**
- * Pane 2 で表示するステージの並び順（左から右へ進行する選考フローと一致）。
- * `STAGE_ORDER` は派生計算（candidateGroups）と「+ 追加」UI の両方から参照する。
+ * Pane 2 で表示する状態の並び順（ネタ → 制作中 → 公開済み）。
  */
 export const STAGE_ORDER = stageKeySchema.options;
 
-// ===== 候補者 =====
-
-/**
- * 候補者の最上位データ。Pane 2 の所属グループは `stage` で決まる。
- * 各 scorecard の派生 status (`deriveStageStatus`) とは独立に持ち、
- * 「現在どのステージに居るか」を表す。
- */
-export const candidateSchema = z.object({
+/** 動画企画の最上位データ。Pane 2 の所属は `stage`（状態）で決まる。 */
+export const videoPlanSchema = z.object({
   id: z.string(),
-  profile: profileSchema,
-  scorecards: z.array(scorecardSchema),
+  profile: videoPlanProfileSchema,
+  subtasks: z.array(subtaskSchema),
   stage: stageKeySchema,
-  // 論理削除フラグ。`stage` とは直交する。アーカイブされた候補者は通常のステージ
-  // グループから外れ、Pane 2 末尾の「アーカイブ済み」グループに表示される。
-  // 復元時は `stage` をそのまま使って元のステージへ戻る。JSON シードでは省略可
-  // （`.default(false)` で読み込み時に補完）。
   archived: z.boolean().default(false),
 });
-export type Candidate = z.infer<typeof candidateSchema>;
+export type VideoPlan = z.infer<typeof videoPlanSchema>;
 
 // ===== JSON 全体用スキーマ =====
 
-export const departmentsSchema = z.array(departmentSchema);
-export const candidatesSchema = z.array(candidateSchema);
+export const channelsSchema = z.array(channelSchema);
+export const videoPlansSchema = z.array(videoPlanSchema);
 export const workspaceSchema = z.object({
   name: z.string(),
   icon: z.string(),
 });
 
+// ===== Pane 2: 撮影スケジュール（6〜12月） =====
+
+export const shootingScheduleSlotKindSchema = z.enum(["slot", "free"]);
+
+// ===== Pane 3: 公開後アナリティクス（YouTube Studio 相当・手入力） =====
+
+/** 公開後の成績。Studio から手入力（将来 API 連携可）。 */
+export const videoAnalyticsSchema = z.object({
+  views: z.string().default(""),
+  impressions: z.string().default(""),
+  /** クリック率（%）。 */
+  ctrPercent: z.string().default(""),
+  /** 平均視聴率・視聴維持率（%）。 */
+  averageViewRatePercent: z.string().default(""),
+  /** 平均視聴時間（例: 4:32）。 */
+  averageViewDuration: z.string().default(""),
+  likes: z.string().default(""),
+  comments: z.string().default(""),
+  subscribersGained: z.string().default(""),
+  memo: z.string().default(""),
+  /** ISO 8601。API 自動取得の最終実行時刻。 */
+  fetchedAt: z.string().default(""),
+});
+export type VideoAnalytics = z.infer<typeof videoAnalyticsSchema>;
+
+export const EMPTY_VIDEO_ANALYTICS: VideoAnalytics =
+  videoAnalyticsSchema.parse({});
+
+// ===== マイルストーン分析（公開後 24h / 3d / 7d / 30d） =====
+
+export const milestoneWindowSchema = z.enum(["24h", "3d", "7d", "30d"]);
+export type MilestoneWindow = z.infer<typeof milestoneWindowSchema>;
+
+export const milestoneMetricsSchema = z.object({
+  views: z.string().default(""),
+  impressions: z.string().default(""),
+  ctrPercent: z.string().default(""),
+  /** ISO 8601。集計実行時刻。 */
+  computedAt: z.string().default(""),
+});
+export type MilestoneMetrics = z.infer<typeof milestoneMetricsSchema>;
+
+export const EMPTY_MILESTONE_METRICS: MilestoneMetrics =
+  milestoneMetricsSchema.parse({});
+
+export const milestoneMapSchema = z
+  .object({
+    "24h": milestoneMetricsSchema.optional(),
+    "3d": milestoneMetricsSchema.optional(),
+    "7d": milestoneMetricsSchema.optional(),
+    "30d": milestoneMetricsSchema.optional(),
+  })
+  .default({});
+export type MilestoneMap = z.infer<typeof milestoneMapSchema>;
+
+export type CompareWindow = MilestoneWindow | "lifetime";
+
+/** 1 枠分の撮影予定。月4本 + フリー枠。 */
+export const shootingScheduleEntrySchema = z.object({
+  id: z.string(),
+  /** 表示グループ用（6〜12）。 */
+  month: z.number().int().min(1).max(12),
+  kind: shootingScheduleSlotKindSchema.default("slot"),
+  /** 1〜8（kind=slot のとき。6月など同一撮影月に2回分ある場合は8まで）。 */
+  slotIndex: z.number().int().min(1).max(8).optional(),
+  shootDate: z.string().default(""),
+  /** 動画の内容（概要・ネタ）。 */
+  videoContent: z.string().default(""),
+  videoTitle: z.string().default(""),
+  thumbnailTitle: z.string().default(""),
+  /** 使用サムネイル（/api/thumbnails/...）。 */
+  thumbnailImageUrl: z.string().default(""),
+  publishDate: z.string().default(""),
+  url: z.string().default(""),
+  /** kind=free の自由記入。 */
+  freeNote: z.string().default(""),
+  videoPlanId: z.string().optional(),
+  /** Pane 3: 公開後の YouTube 分析数値。 */
+  analytics: videoAnalyticsSchema.default(EMPTY_VIDEO_ANALYTICS),
+  /** 公開後マイルストーン（24h / 3d / 7d / 30d）の IMP・CTR・視聴。 */
+  milestones: milestoneMapSchema.default({}),
+});
+export type ShootingScheduleEntry = z.infer<typeof shootingScheduleEntrySchema>;
+
+export const shootingScheduleSchema = z.array(shootingScheduleEntrySchema);
+
 // ===== Pane 4 の表示状態（SelectedDetail） =====
 
 /**
- * Pane 4 に「何を開いているか」を表す型（ADR-0015 §9 大決定 G）。
+ * Pane 4 に「何を開いているか」を表す型。
  *
- * - `{ type: "stage"; stage }`: 選考ステージ詳細を表示中
- * - `null`: ステージ未選択（Pane 4 は畳み状態）
- *
- * 旧 `{ type: "profile" }` はモード 1 廃止（ADR-0015 §4 大決定 B）に伴い削除。
+ * - `{ type: "subtask"; id }`: サブタスク詳細を表示中
+ * - `null`: 未選択（Pane 4 は畳み状態）
  */
-export type SelectedDetail = { type: "stage"; stage: StageKey } | null;
+export type SelectedDetail = { type: "subtask"; id: string } | null;
 
 // ===== Pane 2 の派生計算用 UI 表示型 =====
-// Workspace の派生計算 (candidateGroups) と CandidateListPane の props 型として共有する。
-// candidates 配列から生成される表示単位。
-//
-// `averageScore` は `lib/computed/scorecards.ts` の `getCandidateAverageScore` で
-// 派生計算した値を Workspace 側で詰めて渡す。Pane 2 候補者行の右端に
-// `★ 4.5` または `—`（未評価）として表示される。Pane 3 評価カードの「平均スコア」
-// と同じ意味（最新 done scorecard の axisScores 平均、ADR-0013）。
 
-export type CandidateRow = {
+export type VideoPlanRow = {
   id: string;
   name: string;
   averageScore: number | null;
+  /** 公開予定日の表示用（例: 6/3）。未設定なら null。 */
+  publishDateLabel: string | null;
+  /** 制作中列での進捗メモ（Pane 2 のみ表示）。 */
+  productionProgressNote: string;
 };
 
-// Pane 2 のグループ表示単位（ステージ or アーカイブ済み）。
-// 候補者データは `INITIAL_CANDIDATES` を SSoT とし、`candidateGroups` で
-// 派生計算して CandidateListPane に props で渡す（Workspace 内で計算）。
-//
-// `kind: "stage"` は通常の選考ステージグループ。`stage: StageKey` は
-// 「+ ボタン」から `addCandidate(stage)` を呼ぶときの引数に使う。
-// `kind: "archived"` は archived === true の候補者を集めた末尾の仮想グループで、
-// 「+ 追加」操作は持たず、復元のみ可能。並び順は `kind: "stage"` を STAGE_ORDER で
-// 並べた後、最後に `kind: "archived"` を 1 つだけ置く（要素があるときのみ表示）。
+/** 制作中を長尺 / ショートに分けたときのサブグループ。 */
+export type ProductionSubgroup = {
+  dropContainerId: string;
+  label: string;
+  items: VideoPlanRow[];
+};
+
 export type Group =
-  | { kind: "stage"; stage: StageKey; label: string; items: CandidateRow[] }
-  | { kind: "archived"; label: string; items: CandidateRow[] };
+  | { kind: "stage"; stage: StageKey; label: string; items: VideoPlanRow[] }
+  | {
+      kind: "productionSplit";
+      stage: "inProduction";
+      label: string;
+      subgroups: ProductionSubgroup[];
+    }
+  | { kind: "archived"; label: string; items: VideoPlanRow[] };

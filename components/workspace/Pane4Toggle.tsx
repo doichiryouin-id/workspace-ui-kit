@@ -8,6 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PANE4_COMPARE } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 type Pane4ToggleProps = {
@@ -18,7 +19,7 @@ type Pane4ToggleProps = {
 
 export function Pane4Toggle({ open, onToggle, className }: Pane4ToggleProps) {
   const Icon = open ? PanelRightClose : PanelRightOpen;
-  const label = open ? "Pane 4 を閉じる" : "Pane 4 を開く";
+  const label = open ? PANE4_COMPARE.toggleClose : PANE4_COMPARE.toggleOpen;
 
   return (
     <Tooltip>

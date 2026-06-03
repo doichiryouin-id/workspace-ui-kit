@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
-import { type Department } from "@/lib/schema";
+import { type Channel } from "@/lib/schema";
 import { DeleteConfirmDialog } from "@/components/workspace/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,15 +25,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 type SettingsDialogContentProps = {
-  departments: Department[];
-  onAddDepartment: (name: string) => void;
-  onDeleteDepartment: (deptId: string) => void;
+  channels: Channel[];
+  onAddChannel: (name: string) => void;
+  onDeleteChannel: (deptId: string) => void;
 };
 
 export function SettingsDialogContent({
-  departments,
-  onAddDepartment,
-  onDeleteDepartment,
+  channels,
+  onAddChannel,
+  onDeleteChannel,
 }: SettingsDialogContentProps) {
   const [newDeptName, setNewDeptName] = useState("");
   const [deleteDeptTarget, setDeleteDeptTarget] = useState<{
@@ -44,7 +44,7 @@ export function SettingsDialogContent({
   const handleAddDept = () => {
     const trimmed = newDeptName.trim();
     if (!trimmed) return;
-    onAddDepartment(trimmed);
+    onAddChannel(trimmed);
     setNewDeptName("");
   };
 
@@ -63,7 +63,7 @@ export function SettingsDialogContent({
             <FieldLabel htmlFor="settings-new-dept">事業部</FieldLabel>
             <ScrollArea className="max-h-48">
               <div className="divide-y divide-border rounded-lg border border-border">
-                {departments.map((dept) => (
+                {channels.map((dept) => (
                   <div
                     key={dept.id}
                     className="flex items-center justify-between px-3 py-2"
@@ -83,7 +83,7 @@ export function SettingsDialogContent({
                     </Button>
                   </div>
                 ))}
-                {departments.length === 0 && (
+                {channels.length === 0 && (
                   <div className="px-3 py-4 text-center text-sm text-muted-foreground">
                     事業部がありません
                   </div>
@@ -120,7 +120,7 @@ export function SettingsDialogContent({
             <FieldLabel htmlFor="settings-workspace-name">
               ワークスペース名
             </FieldLabel>
-            <Input id="settings-workspace-name" defaultValue="採用管理" />
+            <Input id="settings-workspace-name" defaultValue="動画企画" />
           </Field>
         </FieldGroup>
 
@@ -138,7 +138,7 @@ export function SettingsDialogContent({
         itemName={deleteDeptTarget?.name ?? ""}
         onConfirm={() => {
           if (deleteDeptTarget) {
-            onDeleteDepartment(deleteDeptTarget.id);
+            onDeleteChannel(deleteDeptTarget.id);
             setDeleteDeptTarget(null);
           }
         }}

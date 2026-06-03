@@ -1,7 +1,7 @@
 /**
- * Profile に関する派生計算ヘルパー。
+ * VideoPlanProfile に関する派生計算ヘルパー。
  *
- * ADR-0014「shadcn 標準フォームによる Pane 4 編集 UI」で Profile から `age` を
+ * ADR-0014「shadcn 標準フォームによる Pane 4 編集 UI」で VideoPlanProfile から `age` を
  * 撤去し、`birthday` から派生計算する方針に変更したため、その単一ソースとしてここに集約する。
  *
  * 設計原則:

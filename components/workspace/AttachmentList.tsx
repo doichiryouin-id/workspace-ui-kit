@@ -17,8 +17,8 @@
  *
  * 状態管理規律（ADR-0010 §6/§7/§8 準拠）:
  * - `openItem` state は本コンポーネント内 useState で持つ
- * - 候補者・ステージ切替は親 (CandidateDetailPane) 側の
- *   `key={selectedCandidateId}-${stage}` でツリー再マウントされ、モーダルも自然に閉じる
+ * - 候補者・ステージ切替は親 (VideoPlanDetailPane) 側の
+ *   `key={selectedVideoPlanId}-${stage}` でツリー再マウントされ、モーダルも自然に閉じる
  * - useEffect 内で setOpenItem(null) するパターンは MUST 禁止
  *
  * ダミー DL は `console.info("[stub] download:", file.id)` の observable stub

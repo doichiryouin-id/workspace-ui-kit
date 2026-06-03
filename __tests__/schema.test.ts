@@ -1,23 +1,25 @@
 import { describe, it, expect } from "vitest";
 
 import {
-  candidatesSchema,
-  departmentsSchema,
+  videoPlansSchema,
+  channelsSchema,
+  shootingScheduleSchema,
   workspaceSchema,
 } from "@/lib/schema";
 
 import positionsData from "@/data/positions.json";
-import candidatesData from "@/data/candidates.json";
+import shootingScheduleData from "@/data/shooting-schedule.json";
+import videoPlansData from "@/data/video-plans.json";
 import workspaceData from "@/data/workspace.json";
 
 describe("data/*.json schema validation", () => {
-  it("data/positions.json は departmentsSchema を満たす", () => {
-    const result = departmentsSchema.safeParse(positionsData);
+  it("data/positions.json は channelsSchema を満たす", () => {
+    const result = channelsSchema.safeParse(positionsData);
     expect(result.success).toBe(true);
   });
 
-  it("data/candidates.json は candidatesSchema を満たす", () => {
-    const result = candidatesSchema.safeParse(candidatesData);
+  it("data/video-plans.json は videoPlansSchema を満たす", () => {
+    const result = videoPlansSchema.safeParse(videoPlansData);
     expect(result.success).toBe(true);
   });
 
@@ -25,34 +27,35 @@ describe("data/*.json schema validation", () => {
     const result = workspaceSchema.safeParse(workspaceData);
     expect(result.success).toBe(true);
   });
+
+  it("data/shooting-schedule.json は shootingScheduleSchema を満たす", () => {
+    const result = shootingScheduleSchema.safeParse(shootingScheduleData);
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("schema rejects invalid data", () => {
-  it("departmentsSchema は配列を期待する", () => {
-    expect(departmentsSchema.safeParse({}).success).toBe(false);
-    expect(departmentsSchema.safeParse(null).success).toBe(false);
+  it("channelsSchema は配列を期待する", () => {
+    expect(channelsSchema.safeParse({}).success).toBe(false);
+    expect(channelsSchema.safeParse(null).success).toBe(false);
   });
 
-  it("candidate は stage が StageKey でないと不可", () => {
+  it("videoPlan は stage が StageKey でないと不可", () => {
     expect(
-      candidatesSchema.safeParse([
+      videoPlansSchema.safeParse([
         {
           id: "x",
           profile: {
             name: "x",
-            birthday: "",
             source: "",
-            email: "",
-            phone: "",
-            address: "",
-            recruiter: "",
-            desiredSalaryMin: "",
-            desiredSalaryMax: "",
+            assignee: "",
+            priority: "",
             availableStartDate: "",
-            careerText: "",
-            motivationFull: "",
+            productionProgressNote: "",
+            outline: "",
+            descriptionNotes: "",
           },
-          scorecards: [],
+          subtasks: [],
           stage: "unknown-stage",
         },
       ]).success,
@@ -65,29 +68,26 @@ describe("schema rejects invalid data", () => {
   });
 });
 
-describe("candidate.archived の取り扱い", () => {
-  const baseCandidate = {
-    id: "c-archived-test",
+describe("videoPlan.archived の取り扱い", () => {
+  const baseVideoPlan = {
+    id: "v-archived-test",
     profile: {
-      name: "テスト 太郎",
-      birthday: "",
+      name: "テスト動画",
+      referenceUrl: "",
       source: "",
-      email: "",
-      phone: "",
-      address: "",
-      recruiter: "",
-      desiredSalaryMin: "",
-      desiredSalaryMax: "",
+      assignee: "",
+      priority: "",
       availableStartDate: "",
-      careerText: "",
-      motivationFull: "",
+      productionProgressNote: "",
+      outline: "",
+      descriptionNotes: "",
     },
-    scorecards: [],
-    stage: "screening" as const,
+    subtasks: [],
+    stage: "idea" as const,
   };
 
   it("archived 未指定なら false がデフォルトで埋まる", () => {
-    const result = candidatesSchema.safeParse([baseCandidate]);
+    const result = videoPlansSchema.safeParse([baseVideoPlan]);
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data[0].archived).toBe(false);
@@ -95,8 +95,8 @@ describe("candidate.archived の取り扱い", () => {
   });
 
   it("archived: true を許容する", () => {
-    const result = candidatesSchema.safeParse([
-      { ...baseCandidate, archived: true },
+    const result = videoPlansSchema.safeParse([
+      { ...baseVideoPlan, archived: true },
     ]);
     expect(result.success).toBe(true);
     if (result.success) {
@@ -105,8 +105,8 @@ describe("candidate.archived の取り扱い", () => {
   });
 
   it("archived が boolean でなければ不可", () => {
-    const result = candidatesSchema.safeParse([
-      { ...baseCandidate, archived: "yes" },
+    const result = videoPlansSchema.safeParse([
+      { ...baseVideoPlan, archived: "yes" },
     ]);
     expect(result.success).toBe(false);
   });

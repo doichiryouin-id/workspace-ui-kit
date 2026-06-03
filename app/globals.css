@@ -77,6 +77,16 @@
   --shadow-opacity: var(--shadow-opacity);
   --color-shadow-color: var(--shadow-color);
   --color-destructive-foreground: var(--destructive-foreground);
+  /* 案 A: Pane 2 ステータス列 / 案 B: primary ティール（--primary 系と連動） */
+  --color-stage-idea-border: var(--stage-idea-border);
+  --color-stage-idea-muted: var(--stage-idea-muted);
+  --color-stage-idea-foreground: var(--stage-idea-foreground);
+  --color-stage-in-production-border: var(--stage-in-production-border);
+  --color-stage-in-production-muted: var(--stage-in-production-muted);
+  --color-stage-in-production-foreground: var(--stage-in-production-foreground);
+  --color-stage-published-border: var(--stage-published-border);
+  --color-stage-published-muted: var(--stage-published-muted);
+  --color-stage-published-foreground: var(--stage-published-foreground);
 }
 
 :root {
@@ -87,32 +97,41 @@
   --canvas: oklch(0.985 0.005 84);
   --popover: oklch(0.9972 0.0028 84.5587);
   --popover-foreground: oklch(0.2354 0.0019 286.2536);
-  --primary: oklch(0.3732 0.0635 258.276);
-  --primary-foreground: oklch(0.9816 0.0017 247.839);
+  --primary: oklch(0.44 0.1 192);
+  --primary-foreground: oklch(0.98 0.005 192);
   --secondary: oklch(0.9526 0.0058 84.5665);
-  --secondary-foreground: oklch(0.3732 0.0635 258.276);
+  --secondary-foreground: oklch(0.44 0.1 192);
   --muted: oklch(0.9468 0.0046 78.2976);
   --muted-foreground: oklch(0.522 0.004 67.7376);
   --accent: oklch(0.9526 0.0058 84.5665);
-  --accent-foreground: oklch(0.3732 0.0635 258.276);
+  --accent-foreground: oklch(0.44 0.1 192);
   --destructive: oklch(0.5624 0.0956 20.5303);
   --border: oklch(0.9251 0.0071 88.645);
   --input: oklch(0.9251 0.0071 88.645);
-  --ring: oklch(0.3732 0.0635 258.276);
-  --chart-1: oklch(0.6318 0.06 244.8148);
+  --ring: oklch(0.44 0.1 192);
+  --chart-1: oklch(0.58 0.1 192);
   --chart-2: oklch(0.6441 0.0496 146.8813);
   --chart-3: oklch(0.719 0.1077 74.6093);
-  --chart-4: oklch(0.7107 0.0351 256.7878);
+  --chart-4: oklch(0.68 0.07 175);
   --chart-5: oklch(0.7118 0.0129 286.0665);
   --radius: 0.625rem;
   --sidebar: oklch(0.9526 0.0058 84.5665);
   --sidebar-foreground: oklch(0.2354 0.0019 286.2536);
-  --sidebar-primary: oklch(0.3732 0.0635 258.276);
-  --sidebar-primary-foreground: oklch(0.9816 0.0017 247.839);
+  --sidebar-primary: oklch(0.44 0.1 192);
+  --sidebar-primary-foreground: oklch(0.98 0.005 192);
   --sidebar-accent: oklch(0.9251 0.0071 88.645);
-  --sidebar-accent-foreground: oklch(0.3732 0.0635 258.276);
+  --sidebar-accent-foreground: oklch(0.44 0.1 192);
   --sidebar-border: oklch(0.9039 0.0029 84.5597);
-  --sidebar-ring: oklch(0.3732 0.0635 258.276);
+  --sidebar-ring: oklch(0.44 0.1 192);
+  --stage-idea-border: oklch(0.72 0.14 75);
+  --stage-idea-muted: oklch(0.965 0.035 85);
+  --stage-idea-foreground: oklch(0.42 0.09 70);
+  --stage-in-production-border: oklch(0.52 0.12 192);
+  --stage-in-production-muted: oklch(0.96 0.03 192);
+  --stage-in-production-foreground: oklch(0.38 0.1 192);
+  --stage-published-border: oklch(0.58 0.11 145);
+  --stage-published-muted: oklch(0.96 0.028 145);
+  --stage-published-foreground: oklch(0.38 0.09 145);
   --destructive-foreground: oklch(1 0 0);
   --font-sans:
     var(--font-inter), "Hiragino Sans", "BIZ UDPGothic", "Yu Gothic UI",
@@ -151,8 +170,8 @@
   --canvas: oklch(0.246 0.006 248.07);
   --popover: oklch(0.2668 0.0071 248.094);
   --popover-foreground: oklch(0.9168 0.0035 67.7802);
-  --primary: oklch(0.7441 0.1311 264.2789);
-  --primary-foreground: oklch(0.2077 0.0398 265.7549);
+  --primary: oklch(0.72 0.13 192);
+  --primary-foreground: oklch(0.22 0.04 192);
   --secondary: oklch(0.2972 0 0);
   --secondary-foreground: oklch(0.9168 0.0035 67.7802);
   --muted: oklch(0.2972 0 0);
@@ -162,20 +181,29 @@
   --destructive: oklch(0.6338 0.1208 21.0422);
   --border: oklch(0.3211 0 0);
   --input: oklch(0.3211 0 0);
-  --ring: oklch(0.7441 0.1311 264.2789);
-  --chart-1: oklch(0.6318 0.06 244.8148);
+  --ring: oklch(0.72 0.13 192);
+  --chart-1: oklch(0.68 0.11 192);
   --chart-2: oklch(0.6441 0.0496 146.8813);
   --chart-3: oklch(0.719 0.1077 74.6093);
-  --chart-4: oklch(0.7107 0.0351 256.7878);
+  --chart-4: oklch(0.74 0.08 175);
   --chart-5: oklch(0.7118 0.0129 286.0665);
   --sidebar: oklch(0.1989 0.0051 248.0841);
   --sidebar-foreground: oklch(0.9168 0.0035 67.7802);
-  --sidebar-primary: oklch(0.7441 0.1311 264.2789);
-  --sidebar-primary-foreground: oklch(0.2077 0.0398 265.7549);
+  --sidebar-primary: oklch(0.72 0.13 192);
+  --sidebar-primary-foreground: oklch(0.22 0.04 192);
   --sidebar-accent: oklch(0.2972 0 0);
   --sidebar-accent-foreground: oklch(0.9168 0.0035 67.7802);
   --sidebar-border: oklch(0.3211 0 0);
-  --sidebar-ring: oklch(0.7441 0.1311 264.2789);
+  --sidebar-ring: oklch(0.72 0.13 192);
+  --stage-idea-border: oklch(0.78 0.12 75);
+  --stage-idea-muted: oklch(0.32 0.04 75);
+  --stage-idea-foreground: oklch(0.88 0.08 80);
+  --stage-in-production-border: oklch(0.72 0.11 192);
+  --stage-in-production-muted: oklch(0.3 0.04 192);
+  --stage-in-production-foreground: oklch(0.88 0.07 192);
+  --stage-published-border: oklch(0.72 0.1 145);
+  --stage-published-muted: oklch(0.3 0.04 145);
+  --stage-published-foreground: oklch(0.88 0.06 145);
   --destructive-foreground: oklch(1 0 0);
   --radius: 0.625rem;
   --font-sans:
@@ -204,6 +232,24 @@
   --shadow-xl:
     0px 10px 20px 0px hsl(0 0% 0% / 0.3), 0px 8px 10px -1px hsl(0 0% 0% / 0.3);
   --shadow-2xl: 0px 10px 20px 0px hsl(0 0% 0% / 0.75);
+}
+
+@layer components {
+  /* Pane 1 公開カレンダー: 公開予定日の赤丸（セル直下。Button の疑似要素は効かない環境がある） */
+  .publish-schedule-day:not(.rdp-hidden)::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    z-index: 30;
+    width: 6px;
+    height: 6px;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    background-color: var(--destructive);
+    box-shadow: 0 0 0 1px var(--background);
+    pointer-events: none;
+  }
 }
 
 @layer base {

@@ -1,0 +1,47 @@
+[
+  { "id": "sch-06-1", "month": 6, "kind": "slot", "slotIndex": 1, "shootDate": "2026-06-10", "videoContent": "横になる時にめまいがする", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-07-03", "url": "", "freeNote": "" },
+  { "id": "sch-06-2", "month": 6, "kind": "slot", "slotIndex": 2, "shootDate": "2026-06-10", "videoContent": "めまいと吐き気がする", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-07-10", "url": "", "freeNote": "" },
+  { "id": "sch-06-3", "month": 6, "kind": "slot", "slotIndex": 3, "shootDate": "2026-06-10", "videoContent": "めまいに効くツボ", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-07-17", "url": "", "freeNote": "" },
+  { "id": "sch-06-4", "month": 6, "kind": "slot", "slotIndex": 4, "shootDate": "2026-06-10", "videoContent": "寝起きにめまいがする", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-07-24", "url": "", "freeNote": "" },
+  { "id": "sch-06-5", "month": 6, "kind": "slot", "slotIndex": 5, "shootDate": "2026-06-17", "videoContent": "中枢感作と足底筋膜炎", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-07-31", "url": "", "freeNote": "" },
+  { "id": "sch-06-6", "month": 6, "kind": "slot", "slotIndex": 6, "shootDate": "2026-06-17", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-08-07", "url": "", "freeNote": "" },
+  { "id": "sch-06-7", "month": 6, "kind": "slot", "slotIndex": 7, "shootDate": "2026-06-17", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-08-14", "url": "", "freeNote": "" },
+  { "id": "sch-06-8", "month": 6, "kind": "slot", "slotIndex": 8, "shootDate": "2026-06-17", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-08-21", "url": "", "freeNote": "" },
+  { "id": "sch-06-free", "month": 6, "kind": "free", "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "6/10 めまい4本 · 6/17 足底筋膜炎4本" },
+
+  { "id": "sch-07-1", "month": 7, "kind": "slot", "slotIndex": 1, "shootDate": "2026-07-15", "videoContent": "坐骨神経痛", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-08-28", "url": "", "freeNote": "" },
+  { "id": "sch-07-2", "month": 7, "kind": "slot", "slotIndex": 2, "shootDate": "2026-07-15", "videoContent": "坐骨神経痛", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-09-04", "url": "", "freeNote": "" },
+  { "id": "sch-07-3", "month": 7, "kind": "slot", "slotIndex": 3, "shootDate": "2026-07-15", "videoContent": "坐骨神経痛", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-09-11", "url": "", "freeNote": "" },
+  { "id": "sch-07-4", "month": 7, "kind": "slot", "slotIndex": 4, "shootDate": "2026-07-15", "videoContent": "坐骨神経痛", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-09-18", "url": "", "freeNote": "" },
+  { "id": "sch-07-free", "month": 7, "kind": "free", "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+
+  { "id": "sch-08-1", "month": 8, "kind": "slot", "slotIndex": 1, "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+  { "id": "sch-08-2", "month": 8, "kind": "slot", "slotIndex": 2, "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+  { "id": "sch-08-3", "month": 8, "kind": "slot", "slotIndex": 3, "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+  { "id": "sch-08-4", "month": 8, "kind": "slot", "slotIndex": 4, "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+  { "id": "sch-08-free", "month": 8, "kind": "free", "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+
+  { "id": "sch-09-1", "month": 9, "kind": "slot", "slotIndex": 1, "shootDate": "2026-09-02", "videoContent": "脊柱管狭窄症", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-09-25", "url": "", "freeNote": "" },
+  { "id": "sch-09-2", "month": 9, "kind": "slot", "slotIndex": 2, "shootDate": "2026-09-02", "videoContent": "脊柱管狭窄症", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-10-02", "url": "", "freeNote": "" },
+  { "id": "sch-09-3", "month": 9, "kind": "slot", "slotIndex": 3, "shootDate": "2026-09-02", "videoContent": "脊柱管狭窄症", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-10-09", "url": "", "freeNote": "" },
+  { "id": "sch-09-4", "month": 9, "kind": "slot", "slotIndex": 4, "shootDate": "2026-09-02", "videoContent": "脊柱管狭窄症", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-10-16", "url": "", "freeNote": "" },
+  { "id": "sch-09-free", "month": 9, "kind": "free", "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+
+  { "id": "sch-10-1", "month": 10, "kind": "slot", "slotIndex": 1, "shootDate": "2026-10-07", "videoContent": "腰椎ヘルニア", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-10-23", "url": "", "freeNote": "" },
+  { "id": "sch-10-2", "month": 10, "kind": "slot", "slotIndex": 2, "shootDate": "2026-10-07", "videoContent": "腰椎ヘルニア", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-10-30", "url": "", "freeNote": "" },
+  { "id": "sch-10-3", "month": 10, "kind": "slot", "slotIndex": 3, "shootDate": "2026-10-07", "videoContent": "腰椎ヘルニア", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-11-06", "url": "", "freeNote": "" },
+  { "id": "sch-10-4", "month": 10, "kind": "slot", "slotIndex": 4, "shootDate": "2026-10-07", "videoContent": "腰椎ヘルニア", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-11-13", "url": "", "freeNote": "" },
+  { "id": "sch-10-free", "month": 10, "kind": "free", "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+
+  { "id": "sch-11-1", "month": 11, "kind": "slot", "slotIndex": 1, "shootDate": "2026-11-04", "videoContent": "仙腸関節と股関節", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-11-20", "url": "", "freeNote": "" },
+  { "id": "sch-11-2", "month": 11, "kind": "slot", "slotIndex": 2, "shootDate": "2026-11-04", "videoContent": "手術するべき股関節痛", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-11-27", "url": "", "freeNote": "" },
+  { "id": "sch-11-3", "month": 11, "kind": "slot", "slotIndex": 3, "shootDate": "2026-11-04", "videoContent": "股関節のセルフケア", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-12-04", "url": "", "freeNote": "" },
+  { "id": "sch-11-4", "month": 11, "kind": "slot", "slotIndex": 4, "shootDate": "2026-11-04", "videoContent": "股関節のセルフケア", "videoTitle": "", "thumbnailTitle": "", "publishDate": "2026-12-11", "url": "", "freeNote": "" },
+  { "id": "sch-11-free", "month": 11, "kind": "free", "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+
+  { "id": "sch-12-1", "month": 12, "kind": "slot", "slotIndex": 1, "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+  { "id": "sch-12-2", "month": 12, "kind": "slot", "slotIndex": 2, "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+  { "id": "sch-12-3", "month": 12, "kind": "slot", "slotIndex": 3, "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+  { "id": "sch-12-4", "month": 12, "kind": "slot", "slotIndex": 4, "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" },
+  { "id": "sch-12-free", "month": 12, "kind": "free", "shootDate": "", "videoContent": "", "videoTitle": "", "thumbnailTitle": "", "publishDate": "", "url": "", "freeNote": "" }
+]

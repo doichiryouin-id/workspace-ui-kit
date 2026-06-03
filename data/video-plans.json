@@ -1,0 +1,195 @@
+[
+  {
+    "id": "v1",
+    "stage": "idea",
+    "profile": {
+      "name": "膝痛、階段で痛いときに疑うこと（整形外科の一般論）",
+      "source": "ネタ箱",
+      "assignee": "",
+      "priority": "",
+      "availableStartDate": "",
+      "outline": "",
+      "descriptionNotes": "40〜60代。階段・正座で膝前側が痛む方向け。診断ではなく一般的な注意喚起。痛みが強い・腫れがある場合は受診を促す。",
+      "referenceUrl": "",
+      "productionProgressNote": ""
+    },
+    "subtasks": []
+  },
+  {
+    "id": "v2",
+    "stage": "inProduction",
+    "profile": {
+      "name": "四十肩セルフストレッチ3種｜痛みが出たら止めるポイント",
+      "source": "本編",
+      "assignee": "院スタッフ",
+      "priority": "高",
+      "availableStartDate": "2026-05-25",
+      "outline": "① 肩関節の仕組み 60秒 ② ストレッチ3種 ③ 注意点・受診の目安 30秒",
+      "descriptionNotes": "想定視聴者: 40〜60代・肩が上がらない・夜も痛い方。一般的なセルフケア。個別の診断・治療の指示はしない。",
+      "referenceUrl": "",
+      "productionProgressNote": "台本 v1 執筆中・サムネ未"
+    },
+    "subtasks": [
+      {
+        "id": "st-v2-0",
+        "label": "構成メモ・フック",
+        "date": "2026-05-10",
+        "format": "企画メモ",
+        "assignee": "院スタッフ",
+        "decision": "完了",
+        "comment": "冒頭フック: 「肩が上がらない＝四十肩とは限らない」を30秒で。視聴維持のため痛みのある動作は後半に回す。",
+        "summary": "タイトル案3つ。サムネは「3つのストレッチ」と「痛みで止める」の両方を検証。",
+        "axisScores": {
+          "achievements": 4,
+          "thinkingAbility": null,
+          "communication": null,
+          "cultureFit": null
+        },
+        "attachments": [
+          {
+            "id": "att-v2-idea-ref",
+            "kind": "txt",
+            "name": "参考メモ.txt",
+            "size": "4 KB",
+            "previewText": "・日本整形外科学会 公開情報のリンク候補\n・院の既存ブログ「肩関節の痛み」記事を参照\n・撮影: 患部は長袖、明るい背景"
+          }
+        ]
+      },
+      {
+        "id": "st-v2-1",
+        "label": "台本 v1",
+        "date": "2026-05-18",
+        "format": "本編 10分",
+        "assignee": "院スタッフ",
+        "comment": "ストレッチ②のデモは鏡越しに撮影。痛みが出たら止めるテロップを各所に入れる。",
+        "summary": "台本ドラフト完成。B-roll は院内トレーニング室で撮影予定。",
+        "axisScores": {
+          "achievements": 5,
+          "thinkingAbility": 4,
+          "communication": 4,
+          "cultureFit": 5
+        },
+        "attachments": [
+          {
+            "id": "att-v2-script",
+            "kind": "pdf",
+            "name": "台本_v1.pdf",
+            "size": "96 KB"
+          }
+        ]
+      },
+      {
+        "id": "st-v2-2",
+        "label": "サムネ・概要欄",
+        "date": "",
+        "format": "公開準備",
+        "assignee": "院スタッフ",
+        "axisScores": {
+          "achievements": null,
+          "thinkingAbility": null,
+          "communication": null,
+          "cultureFit": null
+        },
+        "attachments": []
+      }
+    ]
+  },
+  {
+    "id": "v3",
+    "stage": "idea",
+    "profile": {
+      "name": "慢性腰痛と急性腰痛の違い｜セルフケアの考え方",
+      "source": "ネタ箱",
+      "assignee": "",
+      "priority": "高",
+      "availableStartDate": "",
+      "outline": "",
+      "descriptionNotes": "デスクワーカー向け。痛みの種類の違いを図解。赤旗症状（しびれ・発熱等）では受診。",
+      "referenceUrl": "",
+      "productionProgressNote": ""
+    },
+    "subtasks": []
+  },
+  {
+    "id": "v4",
+    "stage": "inProduction",
+    "profile": {
+      "name": "デスクワーク肩こり｜座位でできるストレッチ10分",
+      "source": "本編",
+      "assignee": "院スタッフ",
+      "priority": "",
+      "availableStartDate": "2026-06-01",
+      "outline": "",
+      "descriptionNotes": "オフィスワーカー向け。椅子のままできる範囲に限定。",
+      "referenceUrl": "",
+      "productionProgressNote": ""
+    },
+    "subtasks": []
+  },
+  {
+    "id": "v5",
+    "stage": "idea",
+    "profile": {
+      "name": "僧帽筋ストレッチ30秒（ショート）",
+      "source": "ショート",
+      "assignee": "",
+      "priority": "",
+      "availableStartDate": "",
+      "outline": "",
+      "descriptionNotes": "ショート用。1種目・30秒・テロップ多め。",
+      "referenceUrl": "",
+      "productionProgressNote": ""
+    },
+    "subtasks": []
+  },
+  {
+    "id": "v6",
+    "stage": "published",
+    "profile": {
+      "name": "膝を伸ばす前の太もも前ストレッチ（ショート）",
+      "source": "ショート",
+      "assignee": "院スタッフ",
+      "priority": "",
+      "availableStartDate": "2026-04-20",
+      "outline": "",
+      "descriptionNotes": "",
+      "referenceUrl": "",
+      "productionProgressNote": ""
+    },
+    "subtasks": []
+  },
+  {
+    "id": "v7",
+    "stage": "published",
+    "archived": true,
+    "profile": {
+      "name": "【アーカイブ】春の健康週間｜院からのお知らせ",
+      "source": "本編",
+      "assignee": "院スタッフ",
+      "priority": "",
+      "availableStartDate": "2026-03-15",
+      "outline": "",
+      "descriptionNotes": "",
+      "referenceUrl": "",
+      "productionProgressNote": ""
+    },
+    "subtasks": []
+  },
+  {
+    "id": "v8",
+    "stage": "idea",
+    "archived": true,
+    "profile": {
+      "name": "【アーカイブ】坐骨神経痛とは？（旧ネタ）",
+      "source": "ネタ箱",
+      "assignee": "",
+      "priority": "",
+      "availableStartDate": "",
+      "outline": "",
+      "descriptionNotes": "別角度の企画に統合したためアーカイブ。",
+      "referenceUrl": "",
+      "productionProgressNote": ""
+    },
+    "subtasks": []
+  }
+]

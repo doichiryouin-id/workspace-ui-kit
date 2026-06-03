@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "採用管理ワークスペース",
-  description: "tweakcn テーマ + 日本語タイポ検証用プロトタイプ",
+  title: "動画企画ワークスペース",
+  description: "治療院 YouTube チャンネル向け動画企画・ネタ帳管理",
 };
 
 export const viewport: Viewport = {
