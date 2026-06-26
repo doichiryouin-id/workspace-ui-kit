@@ -56,42 +56,51 @@ export function VideoAnalyticsPane({
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const lastAutoFetchKey = useRef<string | null>(null);
+  const fetchInFlight = useRef(false);
 
   const runFetch = useCallback(
     async (url: string, force = false) => {
-      if (!url.trim()) return;
+      if (!url.trim() || fetchInFlight.current) return;
+      fetchInFlight.current = true;
       setLoading(true);
       setError(null);
       try {
         const result = await fetchAnalytics(url);
         onUpdateAnalytics(result.analytics);
         setWarnings(result.warnings);
-        if (!force) {
-          lastAutoFetchKey.current = `${entry?.id ?? ""}:${url}`;
-        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : PANE3_ANALYTICS.fetchError,
         );
+        if (!force) {
+          // 自動取得の失敗でエンドレス再試行しない（手動「再取得」は可能）
+          lastAutoFetchKey.current = `${entry?.id ?? ""}:${url}`;
+        }
       } finally {
+        fetchInFlight.current = false;
         setLoading(false);
       }
     },
     [entry?.id, fetchAnalytics, onUpdateAnalytics],
   );
 
+  const entryId = entry?.id;
+  const entryKind = entry?.kind;
+  const entryUrl = entry?.url ?? "";
+  const entryFetchedAt = entry?.analytics.fetchedAt ?? "";
+
   useEffect(() => {
-    if (!entry || entry.kind === "free") return;
-    const url = entry.url.trim();
+    if (!entryId || entryKind === "free") return;
+    const url = entryUrl.trim();
     if (!parseYouTubeVideoId(url)) return;
+    if (entryFetchedAt.trim()) return;
 
-    const key = `${entry.id}:${url}`;
-    const neverFetched = !entry.analytics.fetchedAt.trim();
-    if (!neverFetched && lastAutoFetchKey.current === key) return;
-    if (!neverFetched) return;
+    const key = `${entryId}:${url}`;
+    if (lastAutoFetchKey.current === key) return;
 
+    lastAutoFetchKey.current = key;
     void runFetch(url);
-  }, [entry, runFetch]);
+  }, [entryId, entryKind, entryUrl, entryFetchedAt, runFetch]);
 
   return (
     <section
