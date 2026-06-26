@@ -1,53 +1,63 @@
-import { readFile } from "node:fs/promises";
+import { unlink } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
-const THUMBNAIL_DIR = path.join(process.cwd(), "data", "thumbnails");
+import {
+  contentTypeForFilename,
+  readThumbnailFile,
+} from "@/lib/thumbnails/store";
+import { createSupabaseAdmin } from "@/lib/supabase/workspace-store";
 
-const MIME: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  gif: "image/gif",
-};
+const LOCAL_DIR = path.join(process.cwd(), "data", "thumbnails");
+const TMP_DIR = path.join(os.tmpdir(), "workspace-thumbnails");
 
 type RouteContext = { params: Promise<{ filename: string }> };
+
+function isSafeFilename(filename: string): boolean {
+  return /^[\w-]+\.(jpg|jpeg|png|webp|gif)$/i.test(filename);
+}
 
 export async function GET(_request: Request, context: RouteContext) {
   const { filename } = await context.params;
 
-  if (!/^[\w-]+\.(jpg|jpeg|png|webp|gif)$/i.test(filename)) {
+  if (!isSafeFilename(filename)) {
     return new Response("Not found", { status: 404 });
   }
 
-  const filepath = path.join(THUMBNAIL_DIR, filename);
-  try {
-    const data = await readFile(filepath);
-    const ext = filename.split(".").pop()?.toLowerCase() ?? "";
-    return new Response(data, {
-      headers: {
-        "Content-Type": MIME[ext] ?? "application/octet-stream",
-        "Cache-Control": "private, max-age=3600",
-      },
-    });
-  } catch {
+  const data = await readThumbnailFile(filename);
+  if (!data) {
     return new Response("Not found", { status: 404 });
   }
+
+  return new Response(new Uint8Array(data), {
+    headers: {
+      "Content-Type": contentTypeForFilename(filename),
+      "Cache-Control": "private, max-age=3600",
+    },
+  });
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
   const { filename } = await context.params;
 
-  if (!/^[\w-]+\.(jpg|jpeg|png|webp|gif)$/i.test(filename)) {
+  if (!isSafeFilename(filename)) {
     return new Response("Not found", { status: 404 });
   }
 
-  const filepath = path.join(THUMBNAIL_DIR, filename);
-  try {
-    const { unlink } = await import("node:fs/promises");
-    await unlink(filepath);
-    return new Response(null, { status: 204 });
-  } catch {
-    return new Response("Not found", { status: 404 });
+  for (const dir of [LOCAL_DIR, TMP_DIR]) {
+    try {
+      await unlink(path.join(dir, filename));
+      return new Response(null, { status: 204 });
+    } catch {
+      // try next location
+    }
   }
+
+  const supabase = createSupabaseAdmin();
+  if (supabase) {
+    const { error } = await supabase.storage.from("thumbnails").remove([filename]);
+    if (!error) return new Response(null, { status: 204 });
+  }
+
+  return new Response("Not found", { status: 404 });
 }

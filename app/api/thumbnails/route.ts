@@ -1,9 +1,7 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import { NextResponse } from "next/server";
 
-const THUMBNAIL_DIR = path.join(process.cwd(), "data", "thumbnails");
+import { saveThumbnailFile } from "@/lib/thumbnails/store";
+
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -64,12 +62,15 @@ export async function POST(request: Request) {
 
   const ext = extForMime(file.type);
   const filename = `${entryId}.${ext}`;
-  const filepath = path.join(THUMBNAIL_DIR, filename);
 
-  await mkdir(THUMBNAIL_DIR, { recursive: true });
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(filepath, buffer);
-
-  const url = `/api/thumbnails/${filename}?v=${Date.now()}`;
-  return NextResponse.json({ url, filename });
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const url = await saveThumbnailFile(filename, buffer, file.type);
+    return NextResponse.json({ url, filename });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "サムネの保存に失敗しました";
+    console.error("[api/thumbnails] upload failed:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

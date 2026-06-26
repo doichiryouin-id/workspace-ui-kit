@@ -38,9 +38,24 @@ export function ThumbnailDropZone({
           method: "POST",
           body: form,
         });
-        const json = (await res.json()) as { url?: string; error?: string };
+        const raw = await res.text();
+        let json: { url?: string; error?: string } = {};
+        if (raw) {
+          try {
+            json = JSON.parse(raw) as { url?: string; error?: string };
+          } catch {
+            throw new Error(
+              `サーバー応答が不正です（${res.status}）。時間をおいて再試行してください。`,
+            );
+          }
+        }
         if (!res.ok || !json.url) {
-          throw new Error(json.error ?? "アップロードに失敗しました");
+          throw new Error(
+            json.error ??
+              (res.ok
+                ? "アップロードに失敗しました"
+                : `アップロードに失敗しました（${res.status}）`),
+          );
         }
         onUploaded(json.url);
       } catch (err) {
