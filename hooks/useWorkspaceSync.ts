@@ -130,25 +130,33 @@ export function useWorkspaceSync({
         };
   }, []);
 
+  const applySnapshotRef = useRef(applySnapshot);
+  applySnapshotRef.current = applySnapshot;
+  const markPersistedRef = useRef(markPersisted);
+  markPersistedRef.current = markPersisted;
+
   useEffect(() => {
+    // 初回ハイドレーションのみ。編集で applySnapshot が変わってもクラウドを再読込しない
+    if (initialLoadComplete.current) return;
+
     let cancelled = false;
 
     void (async () => {
       try {
         const payload = await loadRemote();
-        if (cancelled) return;
+        if (cancelled || initialLoadComplete.current) return;
 
         if (!payload.enabled) {
           setSyncEnabled(false);
           setSyncStatus("local");
           initialLoadComplete.current = true;
-          markPersisted();
+          markPersistedRef.current();
           return;
         }
 
         setSyncEnabled(true);
         if (!payload.empty && payload.data) {
-          applySnapshot(payload.data);
+          applySnapshotRef.current(payload.data);
           knownRemoteUpdatedAt.current = payload.updatedAt;
           setRemoteUpdatedAt(payload.updatedAt);
         } else {
@@ -171,12 +179,12 @@ export function useWorkspaceSync({
             knownRemoteUpdatedAt.current = putJson.updatedAt;
             setRemoteUpdatedAt(putJson.updatedAt);
           }
-          markPersisted(seed);
+          markPersistedRef.current(seed);
         }
         setSyncStatus("ready");
         initialLoadComplete.current = true;
       } catch {
-        if (!cancelled) {
+        if (!cancelled && !initialLoadComplete.current) {
           setSyncEnabled(false);
           setSyncStatus("error");
           initialLoadComplete.current = true;
@@ -188,13 +196,7 @@ export function useWorkspaceSync({
       cancelled = true;
       clearSavedMessageTimer();
     };
-  }, [
-    applySnapshot,
-    clearSavedMessageTimer,
-    initialSnapshot,
-    loadRemote,
-    markPersisted,
-  ]);
+  }, [clearSavedMessageTimer, initialSnapshot, loadRemote]);
 
   useEffect(() => {
     if (!syncEnabled || !initialLoadComplete.current) return;
