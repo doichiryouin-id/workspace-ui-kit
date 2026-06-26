@@ -7,6 +7,7 @@ import {
   type ShootingScheduleEntry,
   type VideoPlan,
 } from "@/lib/schema";
+import { workspaceSnapshotFingerprint } from "@/lib/workspace-sync/fingerprint";
 import {
   type WorkspaceSnapshot,
   workspaceSnapshotSchema,
@@ -43,6 +44,10 @@ type UseWorkspaceSyncResult = {
   dismissRemoteUpdate: () => void;
 };
 
+const SAVE_DEBOUNCE_MS = 1500;
+const SAVED_MESSAGE_MS = 1500;
+const REMOTE_POLL_MS = 12_000;
+
 export function useWorkspaceSync({
   initialSnapshot,
   channels,
@@ -61,9 +66,11 @@ export function useWorkspaceSync({
   );
 
   const knownRemoteUpdatedAt = useRef<string | null>(null);
-  const hydratedFromCloud = useRef(false);
+  const initialLoadComplete = useRef(false);
   const skipNextSave = useRef(false);
   const saving = useRef(false);
+  const lastPersistedFingerprint = useRef<string | null>(null);
+  const savedMessageTimer = useRef<number | null>(null);
 
   const buildSnapshot = useCallback((): WorkspaceSnapshot => {
     return workspaceSnapshotSchema.parse({
@@ -74,15 +81,41 @@ export function useWorkspaceSync({
     });
   }, [channels, videoPlans, shootingSchedule, workspaceMeta]);
 
+  const markPersisted = useCallback(
+    (snapshot?: WorkspaceSnapshot) => {
+      lastPersistedFingerprint.current = workspaceSnapshotFingerprint(
+        snapshot ?? buildSnapshot(),
+      );
+    },
+    [buildSnapshot],
+  );
+
   const applySnapshot = useCallback(
     (snapshot: WorkspaceSnapshot) => {
       skipNextSave.current = true;
       setChannels(snapshot.channels);
       setVideoPlans(snapshot.videoPlans);
       setShootingSchedule(snapshot.shootingSchedule);
+      markPersisted(snapshot);
     },
-    [setChannels, setVideoPlans, setShootingSchedule],
+    [markPersisted, setChannels, setVideoPlans, setShootingSchedule],
   );
+
+  const clearSavedMessageTimer = useCallback(() => {
+    if (savedMessageTimer.current !== null) {
+      window.clearTimeout(savedMessageTimer.current);
+      savedMessageTimer.current = null;
+    }
+  }, []);
+
+  const showSavedBriefly = useCallback(() => {
+    clearSavedMessageTimer();
+    setSyncStatus("saved");
+    savedMessageTimer.current = window.setTimeout(() => {
+      setSyncStatus((current) => (current === "saved" ? "ready" : current));
+      savedMessageTimer.current = null;
+    }, SAVED_MESSAGE_MS);
+  }, [clearSavedMessageTimer]);
 
   const loadRemote = useCallback(async () => {
     const res = await fetch("/api/workspace", { cache: "no-store" });
@@ -108,6 +141,8 @@ export function useWorkspaceSync({
         if (!payload.enabled) {
           setSyncEnabled(false);
           setSyncStatus("local");
+          initialLoadComplete.current = true;
+          markPersisted();
           return;
         }
 
@@ -116,11 +151,9 @@ export function useWorkspaceSync({
           applySnapshot(payload.data);
           knownRemoteUpdatedAt.current = payload.updatedAt;
           setRemoteUpdatedAt(payload.updatedAt);
-          hydratedFromCloud.current = true;
         } else {
           knownRemoteUpdatedAt.current = payload.updatedAt;
           setRemoteUpdatedAt(payload.updatedAt);
-          // 初回: ローカル JSON をクラウドへ種まき
           const seed = workspaceSnapshotSchema.parse(initialSnapshot);
           const putRes = await fetch("/api/workspace", {
             method: "PUT",
@@ -138,32 +171,55 @@ export function useWorkspaceSync({
             knownRemoteUpdatedAt.current = putJson.updatedAt;
             setRemoteUpdatedAt(putJson.updatedAt);
           }
+          markPersisted(seed);
         }
         setSyncStatus("ready");
+        initialLoadComplete.current = true;
       } catch {
         if (!cancelled) {
           setSyncEnabled(false);
           setSyncStatus("error");
+          initialLoadComplete.current = true;
         }
       }
     })();
 
     return () => {
       cancelled = true;
+      clearSavedMessageTimer();
     };
-  }, [applySnapshot, initialSnapshot, loadRemote]);
+  }, [
+    applySnapshot,
+    clearSavedMessageTimer,
+    initialSnapshot,
+    loadRemote,
+    markPersisted,
+  ]);
 
   useEffect(() => {
-    if (!syncEnabled || syncStatus === "loading") return;
+    if (!syncEnabled || !initialLoadComplete.current) return;
+
     if (skipNextSave.current) {
       skipNextSave.current = false;
+      return;
+    }
+
+    const fingerprint = workspaceSnapshotFingerprint(buildSnapshot());
+    if (fingerprint === lastPersistedFingerprint.current) {
       return;
     }
 
     const timer = window.setTimeout(() => {
       void (async () => {
         if (saving.current) return;
+
+        const currentFingerprint = workspaceSnapshotFingerprint(buildSnapshot());
+        if (currentFingerprint === lastPersistedFingerprint.current) {
+          return;
+        }
+
         saving.current = true;
+        clearSavedMessageTimer();
         setSyncStatus("saving");
         try {
           const res = await fetch("/api/workspace", {
@@ -199,58 +255,67 @@ export function useWorkspaceSync({
 
           knownRemoteUpdatedAt.current = json.updatedAt;
           setRemoteUpdatedAt(json.updatedAt);
-          setSyncStatus("saved");
-          window.setTimeout(() => {
-            setSyncStatus((current) =>
-              current === "saved" ? "ready" : current,
-            );
-          }, 1500);
+          markPersisted();
+          showSavedBriefly();
         } catch {
           setSyncStatus("error");
         } finally {
           saving.current = false;
         }
       })();
-    }, 1500);
+    }, SAVE_DEBOUNCE_MS);
 
     return () => window.clearTimeout(timer);
   }, [
     buildSnapshot,
     channels,
+    clearSavedMessageTimer,
     loadRemote,
+    markPersisted,
     shootingSchedule,
+    showSavedBriefly,
     syncEnabled,
-    syncStatus,
     videoPlans,
   ]);
 
   useEffect(() => {
-    if (!syncEnabled) return;
+    if (!syncEnabled || !initialLoadComplete.current) return;
 
     const poll = window.setInterval(() => {
       void (async () => {
-        if (saving.current || syncStatus === "conflict") return;
+        if (saving.current) return;
         try {
           const payload = await loadRemote();
           if (!payload.enabled || payload.empty || !payload.data) return;
           if (
-            payload.updatedAt &&
-            knownRemoteUpdatedAt.current &&
-            new Date(payload.updatedAt).getTime() >
+            !payload.updatedAt ||
+            !knownRemoteUpdatedAt.current ||
+            new Date(payload.updatedAt).getTime() <=
               new Date(knownRemoteUpdatedAt.current).getTime()
           ) {
-            setPendingRemote(payload.data);
-            setRemoteUpdatedAt(payload.updatedAt);
-            setSyncStatus("remote-update");
+            return;
           }
+
+          const remoteFingerprint = workspaceSnapshotFingerprint(payload.data);
+          const localFingerprint = workspaceSnapshotFingerprint(buildSnapshot());
+          if (remoteFingerprint === localFingerprint) {
+            knownRemoteUpdatedAt.current = payload.updatedAt;
+            setRemoteUpdatedAt(payload.updatedAt);
+            markPersisted(payload.data);
+            return;
+          }
+
+          setPendingRemote(payload.data);
+          setRemoteUpdatedAt(payload.updatedAt);
+          setSyncStatus("remote-update");
         } catch {
           // ポーリング失敗は黙ってスキップ
         }
       })();
-    }, 12_000);
+    }, REMOTE_POLL_MS);
 
     return () => window.clearInterval(poll);
-  }, [loadRemote, syncEnabled, syncStatus]);
+  }, [buildSnapshot, loadRemote, markPersisted, syncEnabled]);
 
   const applyRemoteSnapshot = useCallback(async () => {
     if (pendingRemote) {
@@ -274,8 +339,12 @@ export function useWorkspaceSync({
 
   const dismissRemoteUpdate = useCallback(() => {
     setPendingRemote(null);
+    if (remoteUpdatedAt) {
+      knownRemoteUpdatedAt.current = remoteUpdatedAt;
+    }
+    markPersisted();
     setSyncStatus("ready");
-  }, []);
+  }, [markPersisted, remoteUpdatedAt]);
 
   return {
     syncEnabled,
