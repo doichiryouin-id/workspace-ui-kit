@@ -23,6 +23,14 @@ describe("parseReachReportCsv", () => {
       ctrRatio: 0.02,
     });
   });
+
+  it("YYYYMMDD 形式の日付を正規化する", () => {
+    const csv = [
+      "date,channel_id,video_id,video_thumbnail_impressions,video_thumbnail_impressions_ctr",
+      "20260626,UCxxx,vid123,100,0.05",
+    ].join("\n");
+    expect(parseReachReportCsv(csv)[0]?.date).toBe("2026-06-26");
+  });
 });
 
 describe("aggregateReachForRange", () => {

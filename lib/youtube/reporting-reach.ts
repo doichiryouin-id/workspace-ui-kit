@@ -36,7 +36,17 @@ type ReportFile = {
   startTime?: string;
   endTime?: string;
   createTime?: string;
+  downloadUrl?: string;
 };
+
+/** YYYYMMDD → YYYY-MM-DD。reach CSV は日付形式が混在する。 */
+export function normalizeReachDate(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^\d{8}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`;
+  }
+  return trimmed;
+}
 
 /** Reporting API の 1 分あたり上限。 */
 export class ReachQuotaExceededError extends Error {
@@ -107,7 +117,7 @@ export function parseReachReportCsv(text: string): ReachDailyRow[] {
     const ctrRatio = Number(cols[ctrIdx]);
     if (!date || !videoId || !Number.isFinite(impressions)) continue;
     rows.push({
-      date,
+      date: normalizeReachDate(date),
       videoId,
       impressions,
       ctrRatio: Number.isFinite(ctrRatio) ? ctrRatio : 0,
@@ -213,13 +223,13 @@ export async function fetchReachDailyRows(
 
   const allRows: ReachDailyRow[] = [];
   for (const report of reports) {
-    const res = await fetch(
-      `${REPORTING_BASE}/jobs/${jobId}/reports/${report.id}?alt=media`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        cache: "no-store",
-      },
-    );
+    const downloadUrl = report.downloadUrl;
+    if (!downloadUrl) continue;
+
+    const res = await fetch(downloadUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    });
     if (res.status === 429) {
       throw new ReachQuotaExceededError();
     }
