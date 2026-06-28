@@ -3,9 +3,11 @@ import { describe, it, expect } from "vitest";
 import {
   computeCompareBenchmarks,
   computeMilestoneCompareBenchmarks,
+  compareCellPendingLabel,
   compareToBenchmark,
   getMilestoneMetricValue,
   getPublishedCompareRows,
+  isCompareCellPending,
   isPublishedScheduleEntry,
   parseMetricNumber,
 } from "@/lib/computed/analytics-compare";
@@ -159,5 +161,38 @@ describe("compareToBenchmark", () => {
   it("平均より上なら above", () => {
     expect(compareToBenchmark(110, 100)).toBe("above");
     expect(compareToBenchmark(90, 100)).toBe("below");
+  });
+});
+
+describe("isCompareCellPending", () => {
+  const row = {
+    id: "a",
+    publishDate: "2026-06-26",
+    publishLabel: "6/26(金)",
+    title: "テスト",
+    thumbnailImageUrl: "",
+    analytics: EMPTY_VIDEO_ANALYTICS,
+    milestones: {
+      "24h": {
+        views: "0",
+        impressions: "",
+        ctrPercent: "",
+        computedAt: "",
+      },
+    },
+  };
+
+  it("Analytics 遅延中の 0 は反映待ち", () => {
+    expect(
+      isCompareCellPending(row, "24h"),
+    ).toBe(true);
+    expect(compareCellPendingLabel("2026-06-26", "24h")).toBe("analyticsLag");
+  });
+
+  it("未到達ウィンドウは pending", () => {
+    expect(
+      isCompareCellPending(row, "3d"),
+    ).toBe(true);
+    expect(compareCellPendingLabel("2026-06-26", "3d")).toBe("notDue");
   });
 });

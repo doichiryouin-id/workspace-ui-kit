@@ -131,11 +131,14 @@ function WorkspaceBody({
   );
 
   const fetchYouTubeAnalyticsForSchedule = useCallback(
-    async (url: string): Promise<YouTubeAnalyticsFetchResult> => {
+    async (
+      url: string,
+      publishDate?: string,
+    ): Promise<YouTubeAnalyticsFetchResult> => {
       const res = await fetch("/api/youtube-analytics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, publishDate: publishDate?.trim() || undefined }),
       });
       const data = (await res.json()) as YouTubeAnalyticsFetchResult & {
         error?: string;

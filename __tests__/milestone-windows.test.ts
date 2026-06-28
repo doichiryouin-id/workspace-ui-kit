@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  isMilestoneAnalyticsLag,
   isMilestoneWindowDue,
   milestoneDateRange,
   milestoneEndDate,
@@ -19,6 +20,28 @@ describe("milestoneDateRange", () => {
       startDate: "2026-07-03",
       endDate: "2026-07-06",
     });
+  });
+});
+
+describe("isMilestoneAnalyticsLag", () => {
+  it("24h 終了直後は Analytics 反映待ち", () => {
+    expect(
+      isMilestoneAnalyticsLag(
+        "2026-06-26",
+        "24h",
+        new Date("2026-06-28"),
+      ),
+    ).toBe(true);
+  });
+
+  it("終了から3日経過後は反映待ちではない", () => {
+    expect(
+      isMilestoneAnalyticsLag(
+        "2026-06-26",
+        "24h",
+        new Date("2026-07-01"),
+      ),
+    ).toBe(false);
   });
 });
 

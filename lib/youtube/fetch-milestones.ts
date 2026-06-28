@@ -8,6 +8,7 @@ import { fetchVideoViewsInRange } from "@/lib/youtube/analytics-views";
 import {
   dueMilestoneWindows,
   isDateInRange,
+  isMilestoneAnalyticsLag,
   milestoneDateRange,
 } from "@/lib/youtube/milestone-windows";
 import {
@@ -99,14 +100,29 @@ async function computeMilestonesForVideo(
     }
 
     if (views === null) {
-      warnings.push(
-        `${window} 視聴回数: この期間の Analytics データがありません（公開日・チャンネル設定を確認）`,
-      );
+      if (isMilestoneAnalyticsLag(publishDate, window, referenceDate)) {
+        warnings.push(
+          `${window} 視聴回数: YouTube Analytics の日次反映待ち（2〜3 日後に再更新）`,
+        );
+      } else {
+        warnings.push(
+          `${window} 視聴回数: この期間の Analytics データがありません`,
+        );
+      }
     } else if (views === 0) {
-      warnings.push(
-        `${window} 視聴回数: 0（この期間に視聴が記録されていないか、Analytics の反映待ち）`,
-      );
+      if (isMilestoneAnalyticsLag(publishDate, window, referenceDate)) {
+        views = null;
+        warnings.push(
+          `${window} 視聴回数: YouTube Analytics の日次反映待ち（2〜3 日後に再更新）`,
+        );
+      } else {
+        warnings.push(
+          `${window} 視聴回数: 0（この期間に視聴が記録されていないか、Analytics の反映待ち）`,
+        );
+      }
     }
+
+    const reach = aggregateReachForRange(
       reachRows,
       videoId,
       range.startDate,

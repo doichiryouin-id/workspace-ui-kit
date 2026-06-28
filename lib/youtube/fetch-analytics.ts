@@ -9,8 +9,17 @@ import {
   refreshYouTubeAccessToken,
 } from "@/lib/youtube/oauth";
 import { fetchLifetimeVideoViews } from "@/lib/youtube/analytics-views";
+import {
+  aggregateReachForRange,
+  fetchReachDailyRows,
+} from "@/lib/youtube/reporting-reach";
 import { parseYouTubeVideoId } from "@/lib/youtube/video-id";
 import { type VideoAnalytics } from "@/lib/schema";
+
+export type YouTubeAnalyticsFetchOptions = {
+  /** 累計 IMP/CTR の集計開始日（公開日）。未指定時はレポート全体。 */
+  publishDate?: string;
+};
 
 export type YouTubeAnalyticsFetchResult = {
   videoId: string;
@@ -137,9 +146,27 @@ async function fetchAnalyticsApiMetrics(
   return patch;
 }
 
-/** URL から YouTube 分析数値を取得（Data API + Analytics API）。 */
+async function fetchReachLifetimeMetrics(
+  videoId: string,
+  accessToken: string,
+  publishDate?: string,
+): Promise<Partial<VideoAnalytics>> {
+  const endDate = new Date().toISOString().slice(0, 10);
+  const startDate = publishDate?.trim() || "2020-01-01";
+  const rows = await fetchReachDailyRows(accessToken, startDate);
+  const reach = aggregateReachForRange(rows, videoId, startDate, endDate);
+  if (!reach) return {};
+
+  return {
+    impressions: String(reach.impressions),
+    ctrPercent: reach.ctrPercent,
+  };
+}
+
+/** URL から YouTube 分析数値を取得（Data API + Analytics API + reach レポート）。 */
 export async function fetchYouTubeAnalytics(
   urlOrId: string,
+  options: YouTubeAnalyticsFetchOptions = {},
 ): Promise<YouTubeAnalyticsFetchResult> {
   const videoId = parseYouTubeVideoId(urlOrId);
   if (!videoId) {
@@ -188,10 +215,31 @@ export async function fetchYouTubeAnalytics(
           analytics.views = String(views);
         }
       }
+
+      try {
+        Object.assign(
+          analytics,
+          await fetchReachLifetimeMetrics(
+            videoId,
+            accessToken,
+            options.publishDate,
+          ),
+        );
+      } catch (err) {
+        warnings.push(
+          err instanceof Error
+            ? err.message
+            : "YouTube reach レポート（IMP/CTR）の取得に失敗",
+        );
+      }
+
+      if (!analytics.impressions?.trim() && !analytics.ctrPercent?.trim()) {
+        warnings.push(
+          "累計 IMP/CTR: reach レポートにまだデータがありません（ジョブ生成後 24〜48h、または手入力）",
+        );
+      }
+
       analyticsApi = true;
-      warnings.push(
-        "累計 IMP/CTR は Pane 4 の「マイルストーン更新」で取得できます（手入力も可）",
-      );
     } catch (err) {
       warnings.push(
         err instanceof Error

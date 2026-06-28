@@ -1,4 +1,4 @@
-import { addDays, format, parseISO, startOfDay } from "date-fns";
+import { addDays, differenceInCalendarDays, format, parseISO, startOfDay } from "date-fns";
 
 import { parseISODate } from "@/lib/computed/profile";
 import { type MilestoneWindow } from "@/lib/schema";
@@ -57,6 +57,28 @@ export function milestoneDateRange(
   const endDate = milestoneEndDate(trimmed, window);
   if (!trimmed || !endDate) return null;
   return { startDate: trimmed, endDate };
+}
+
+/** YouTube Analytics の日次データは通常 2〜3 日遅れる。 */
+export const ANALYTICS_DAY_LAG_DAYS = 3;
+
+/**
+ * ウィンドウ終了後も Analytics 日次が未反映の可能性がある期間。
+ * この間は 0 / 空を「未取得」とみなし UI で反映待ち表示する。
+ */
+export function isMilestoneAnalyticsLag(
+  publishDate: string,
+  window: MilestoneWindow,
+  referenceDate: Date = new Date(),
+): boolean {
+  if (!isMilestoneWindowDue(publishDate, window, referenceDate)) return false;
+  const endIso = milestoneEndDate(publishDate, window);
+  if (!endIso) return false;
+  const daysSinceEnd = differenceInCalendarDays(
+    startOfDay(referenceDate),
+    startOfDay(parseISO(endIso)),
+  );
+  return daysSinceEnd >= 0 && daysSinceEnd < ANALYTICS_DAY_LAG_DAYS;
 }
 
 /** reach CSV 用: 指定範囲に含まれる日付か。 */

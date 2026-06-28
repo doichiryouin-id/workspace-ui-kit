@@ -5,6 +5,7 @@ import { fetchYouTubeAnalytics } from "@/lib/youtube/fetch-analytics";
 
 const requestSchema = z.object({
   url: z.string().min(1),
+  publishDate: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -24,7 +25,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await fetchYouTubeAnalytics(parsed.data.url);
+    const result = await fetchYouTubeAnalytics(parsed.data.url, {
+      publishDate: parsed.data.publishDate,
+    });
     return NextResponse.json(result);
   } catch (err) {
     const message =

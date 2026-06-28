@@ -42,7 +42,10 @@ import {
 type VideoAnalyticsPaneProps = {
   entry: ShootingScheduleEntry | null;
   onUpdateAnalytics: (patch: Partial<VideoAnalytics>) => void;
-  fetchAnalytics: (url: string) => Promise<YouTubeAnalyticsFetchResult>;
+  fetchAnalytics: (
+    url: string,
+    publishDate?: string,
+  ) => Promise<YouTubeAnalyticsFetchResult>;
   width: number;
 };
 
@@ -65,7 +68,7 @@ export function VideoAnalyticsPane({
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchAnalytics(url);
+        const result = await fetchAnalytics(url, entry?.publishDate);
         onUpdateAnalytics(result.analytics);
         setWarnings(result.warnings);
       } catch (err) {
@@ -81,7 +84,7 @@ export function VideoAnalyticsPane({
         setLoading(false);
       }
     },
-    [entry?.id, fetchAnalytics, onUpdateAnalytics],
+    [entry?.id, entry?.publishDate, fetchAnalytics, onUpdateAnalytics],
   );
 
   const entryId = entry?.id;
@@ -120,7 +123,7 @@ export function VideoAnalyticsPane({
             variant="outline"
             size="sm"
             disabled={loading}
-            onClick={() => void runFetch(entry.url, true)}
+            onClick={() => void runFetch(entry.url.trim(), true)}
           >
             <RefreshCw
               className={loading ? "size-3.5 animate-spin" : "size-3.5"}
@@ -350,9 +353,12 @@ function MetricGrid({ analytics }: { analytics: VideoAnalytics }) {
 function formatMetric(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "—";
-  const num = Number(trimmed.replace(/,/g, ""));
-  if (!Number.isNaN(num) && trimmed.match(/^[\d,.]+$/)) {
-    return num.toLocaleString("ja-JP");
+  const normalized = trimmed.replace(/%/g, "").replace(/,/g, "");
+  const num = Number(normalized);
+  if (!Number.isNaN(num) && /^[\d.]+%?$/.test(trimmed.replace(/,/g, ""))) {
+    return num.toLocaleString("ja-JP", {
+      maximumFractionDigits: trimmed.includes(".") ? 1 : 0,
+    });
   }
   return trimmed;
 }

@@ -113,6 +113,7 @@ export const PANE4_COMPARE = {
   milestoneHintHorizontal:
     "24h / 3日 … = マイルストーン更新の期間別データ · 累計 = Pane 3 の視聴回数 · 横スクロール可",
   pending: "未到達",
+  analyticsLagPending: "反映待ち",
   milestoneOAuthMissing:
     "YouTube OAuth 未設定 — Vercel の Environment Variables に YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET / YOUTUBE_REFRESH_TOKEN を設定して Redeploy（手順: docs/YOUTUBE-ANALYTICS-SETUP.md）",
   milestoneSyncError: "マイルストーン取得に失敗しました",

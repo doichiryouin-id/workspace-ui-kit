@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
 import { parseISODate } from "@/lib/computed/profile";
-import { isMilestoneWindowDue } from "@/lib/youtube/milestone-windows";
+import { isMilestoneWindowDue, isMilestoneAnalyticsLag } from "@/lib/youtube/milestone-windows";
 import {
   type CompareWindow,
   type MilestoneMap,
@@ -141,9 +141,54 @@ export function getMetricRawForWindow(
 export function isCompareCellPending(
   row: CompareRow,
   window: CompareWindow,
+  referenceDate: Date = new Date(),
 ): boolean {
   if (window === "lifetime") return false;
-  return !isMilestoneWindowDue(row.publishDate, window);
+  if (!isMilestoneWindowDue(row.publishDate, window, referenceDate)) return true;
+  return (
+    isMilestoneAnalyticsLag(row.publishDate, window, referenceDate) &&
+    isMilestoneMetricEmpty(row, window, referenceDate)
+  );
+}
+
+function isMilestoneMetricEmpty(
+  row: CompareRow,
+  window: MilestoneWindow,
+  referenceDate: Date = new Date(),
+): boolean {
+  const snapshot = row.milestones[window];
+  if (!snapshot) return true;
+
+  const views = parseMetricNumber(snapshot.views);
+  const impressions = parseMetricNumber(snapshot.impressions);
+  const ctr = parseMetricNumber(snapshot.ctrPercent);
+
+  if (isMilestoneAnalyticsLag(row.publishDate, window, referenceDate)) {
+    const viewsEmpty = views === null || views === 0;
+    const impEmpty = impressions === null || impressions === 0;
+    const ctrEmpty = ctr === null || ctr === 0;
+    return viewsEmpty && impEmpty && ctrEmpty;
+  }
+
+  return (
+    !snapshot.views.trim() &&
+    !snapshot.impressions.trim() &&
+    !snapshot.ctrPercent.trim()
+  );
+}
+
+/** 反映待ちセル用ラベル（未到達 vs Analytics 遅延）。 */
+export function compareCellPendingLabel(
+  publishDate: string,
+  window: CompareWindow,
+  referenceDate: Date = new Date(),
+): "notDue" | "analyticsLag" | null {
+  if (window === "lifetime") return null;
+  if (!isMilestoneWindowDue(publishDate, window, referenceDate)) return "notDue";
+  if (isMilestoneAnalyticsLag(publishDate, window, referenceDate)) {
+    return "analyticsLag";
+  }
+  return null;
 }
 
 export function computeMetricAverages(rows: CompareRow[]): MetricAverages {
@@ -166,8 +211,10 @@ export function computeMilestoneMetricAverages(
   referenceDate: Date = new Date(),
 ): MilestoneMetricAverages {
   const result = {} as MilestoneMetricAverages;
-  const eligible = rows.filter((row) =>
-    isMilestoneWindowDue(row.publishDate, window, referenceDate),
+  const eligible = rows.filter(
+    (row) =>
+      isMilestoneWindowDue(row.publishDate, window, referenceDate) &&
+      !isCompareCellPending(row, window, referenceDate),
   );
 
   for (const key of MILESTONE_COMPARE_METRICS) {

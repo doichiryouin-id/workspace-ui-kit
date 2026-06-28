@@ -15,6 +15,7 @@ import {
   compareToBenchmark,
   computeCompareBenchmarks,
   computeMilestoneCompareBenchmarks,
+  compareCellPendingLabel,
   formatAverageCell,
   formatCompareCell,
   getMetricRawForWindow,
@@ -403,6 +404,9 @@ function CompareDataRow({
         const isLifetime = group.window === "lifetime";
         const pending =
           !isLifetime && isCompareCellPending(row, group.window);
+        const pendingLabel = !isLifetime
+          ? compareCellPendingLabel(row.publishDate, group.window)
+          : null;
 
         return group.metrics.map((metric, idx) => {
           const raw = getMetricRawForWindow(row, group.window, metric);
@@ -434,7 +438,9 @@ function CompareDataRow({
               )}
             >
               {pending
-                ? PANE4_COMPARE.pending
+                ? pendingLabel === "analyticsLag"
+                  ? PANE4_COMPARE.analyticsLagPending
+                  : PANE4_COMPARE.pending
                 : formatCompareCell(raw, metric)}
             </td>
           );
