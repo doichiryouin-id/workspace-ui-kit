@@ -13,6 +13,7 @@ import {
   type PaneWidthKey,
 } from "@/hooks/useWorkspacePaneWidths";
 import { isPublishedScheduleEntry } from "@/lib/computed/analytics-compare";
+import { dueMilestoneWindows } from "@/lib/youtube/milestone-windows";
 import {
   type Channel,
   type VideoPlan,
@@ -169,7 +170,18 @@ function WorkspaceBody({
         publishDate: e.publishDate.trim(),
       }));
 
-    if (items.length === 0) return;
+    if (items.length === 0) {
+      return {
+        warnings: [] as string[],
+        updatedWindowCount: 0,
+        dueWindowCount: 0,
+      };
+    }
+
+    const dueWindowCount = items.reduce(
+      (sum, item) => sum + dueMilestoneWindows(item.publishDate).length,
+      0,
+    );
 
     setMilestoneSyncing(true);
     try {
@@ -183,15 +195,31 @@ function WorkspaceBody({
         results?: Array<{
           id: string;
           milestones: Partial<MilestoneMap>;
+          warnings?: string[];
         }>;
       };
       if (!res.ok) {
         throw new Error(data.error ?? "マイルストーン取得に失敗しました");
       }
 
+      const results = data.results ?? [];
       const byId = new Map(
-        (data.results ?? []).map((r) => [r.id, r.milestones] as const),
+        results.map((r) => [r.id, r.milestones] as const),
       );
+
+      let updatedWindowCount = 0;
+      for (const patch of byId.values()) {
+        for (const snapshot of Object.values(patch)) {
+          if (!snapshot) continue;
+          if (
+            snapshot.views.trim() ||
+            snapshot.impressions.trim() ||
+            snapshot.ctrPercent.trim()
+          ) {
+            updatedWindowCount += 1;
+          }
+        }
+      }
 
       setShootingSchedule((prev) =>
         prev.map((entry) => {
@@ -203,6 +231,12 @@ function WorkspaceBody({
           };
         }),
       );
+
+      return {
+        warnings: results.flatMap((r) => r.warnings ?? []),
+        updatedWindowCount,
+        dueWindowCount,
+      };
     } finally {
       setMilestoneSyncing(false);
     }

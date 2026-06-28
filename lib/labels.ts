@@ -113,6 +113,15 @@ export const PANE4_COMPARE = {
   milestoneHintHorizontal:
     "24h / 3日 / 1週間 / 1ヶ月 / 累計を横並び表示。→ 横スクロールで全体を確認",
   pending: "未到達",
+  milestoneOAuthMissing:
+    "YouTube OAuth 未設定 — IMP・CTR の自動取得には .env.local の CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN が必要です（docs/YOUTUBE-ANALYTICS-SETUP.md）",
+  milestoneSyncError: "マイルストーン取得に失敗しました",
+  milestoneSyncNoData:
+    "集計可能なマイルストーンがありません（公開日の翌日以降に 24h、以降 3日 / 1週間 / 1ヶ月と順に反映）",
+  milestoneSyncSuccess: (count: number) =>
+    `${count} 件のマイルストーン期間に数値を反映しました`,
+  milestoneSyncEmpty:
+    "取得は完了しましたが、数値は 0 件でした（未到達の期間、Reporting API 未設定、reach レポート未生成の可能性）",
 } as const;
 
 // ===== Pane 4 セクション id =====

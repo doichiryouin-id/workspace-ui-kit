@@ -5,8 +5,8 @@
  * 24h / 3日 / 1週間 / 1ヶ月 / 累計を横並びで表示。
  */
 
-import { useMemo } from "react";
-import { RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -41,7 +41,11 @@ type AnalyticsComparePaneProps = {
   width: number;
   onTogglePane4: () => void;
   onSelectEntry: (id: string) => void;
-  onSyncMilestones: () => Promise<void>;
+  onSyncMilestones: () => Promise<{
+    warnings: string[];
+    updatedWindowCount: number;
+    dueWindowCount: number;
+  }>;
   milestoneSyncing: boolean;
 };
 
@@ -97,6 +101,57 @@ export function AnalyticsComparePane({
   onSyncMilestones,
   milestoneSyncing,
 }: AnalyticsComparePaneProps) {
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncWarnings, setSyncWarnings] = useState<string[]>([]);
+  const [syncInfo, setSyncInfo] = useState<string | null>(null);
+  const [syncInfoTone, setSyncInfoTone] = useState<
+    "loading" | "success" | "info" | null
+  >(null);
+  const [analyticsApiReady, setAnalyticsApiReady] = useState<boolean | null>(
+    null,
+  );
+
+  useEffect(() => {
+    void fetch("/api/youtube-analytics/status")
+      .then((res) => res.json() as Promise<{ analyticsApi?: boolean }>)
+      .then((data) => setAnalyticsApiReady(Boolean(data.analyticsApi)))
+      .catch(() => setAnalyticsApiReady(false));
+  }, []);
+
+  const handleSyncMilestones = useCallback(async () => {
+    setSyncError(null);
+    setSyncWarnings([]);
+    setSyncInfo(PANE4_COMPARE.milestoneSyncing);
+    setSyncInfoTone("loading");
+    try {
+      const outcome = await onSyncMilestones();
+      const uniqueWarnings = [...new Set(outcome.warnings.filter(Boolean))];
+
+      if (outcome.updatedWindowCount > 0) {
+        setSyncInfo(
+          PANE4_COMPARE.milestoneSyncSuccess(outcome.updatedWindowCount),
+        );
+        setSyncInfoTone("success");
+      } else if (outcome.dueWindowCount === 0) {
+        setSyncInfo(PANE4_COMPARE.milestoneSyncNoData);
+        setSyncInfoTone("info");
+      } else {
+        setSyncInfo(PANE4_COMPARE.milestoneSyncEmpty);
+        setSyncInfoTone("info");
+      }
+
+      setSyncWarnings(uniqueWarnings);
+    } catch (err) {
+      setSyncInfo(null);
+      setSyncInfoTone(null);
+      setSyncError(
+        err instanceof Error
+          ? err.message
+          : PANE4_COMPARE.milestoneSyncError,
+      );
+    }
+  }, [onSyncMilestones]);
+
   const rows = useMemo(() => getPublishedCompareRows(entries), [entries]);
 
   const benchmarksByWindow = useMemo((): BenchmarksByWindow => {
@@ -128,7 +183,7 @@ export function AnalyticsComparePane({
               variant="outline"
               size="sm"
               disabled={milestoneSyncing || rows.length === 0}
-              onClick={() => void onSyncMilestones()}
+              onClick={() => void handleSyncMilestones()}
             >
               <RefreshCw
                 className={
@@ -142,9 +197,52 @@ export function AnalyticsComparePane({
             </Button>
             <Pane4Toggle open={pane4Open} onToggle={onTogglePane4} />
           </header>
-          <p className="border-b border-border px-3 py-1.5 text-[11px] text-muted-foreground">
-            {PANE4_COMPARE.milestoneHintHorizontal}
-          </p>
+          <div className="flex flex-col gap-1.5 border-b border-border px-3 py-1.5">
+            <p className="text-[11px] text-muted-foreground">
+              {PANE4_COMPARE.milestoneHintHorizontal}
+            </p>
+            {analyticsApiReady === false ? (
+              <p
+                className="flex items-start gap-1.5 rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 text-[11px] text-destructive"
+                role="alert"
+              >
+                <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                {PANE4_COMPARE.milestoneOAuthMissing}
+              </p>
+            ) : null}
+            {syncError ? (
+              <p
+                className="flex items-start gap-1.5 rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 text-[11px] text-destructive"
+                role="alert"
+              >
+                <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                {syncError}
+              </p>
+            ) : null}
+            {syncInfo ? (
+              <p
+                className={cn(
+                  "rounded-md px-2 py-1.5 text-[11px]",
+                  syncInfoTone === "loading" &&
+                    "bg-muted/40 text-muted-foreground",
+                  syncInfoTone === "success" &&
+                    "border border-emerald-500/30 bg-emerald-500/5 text-emerald-800 dark:text-emerald-300",
+                  syncInfoTone === "info" &&
+                    "border border-border bg-muted/30 text-muted-foreground",
+                )}
+                role="status"
+              >
+                {syncInfo}
+              </p>
+            ) : null}
+            {syncWarnings.length > 0 ? (
+              <ul className="rounded-md border border-amber-500/30 bg-amber-500/5 px-2 py-1.5 text-[11px] text-amber-900 dark:text-amber-200">
+                {syncWarnings.map((warning, index) => (
+                  <li key={`${index}-${warning}`}>{warning}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
           <ScrollArea className="min-h-0 flex-1">
             {rows.length === 0 ? (
               <p className="px-4 py-6 text-sm text-muted-foreground">
