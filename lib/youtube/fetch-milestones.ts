@@ -168,7 +168,7 @@ export async function fetchMilestonesBatch(
   let reachRows: ReachDailyRow[] = [];
   const reachWarnings: string[] = [];
   try {
-    reachRows = await fetchReachDailyRows(accessToken, minPublish || undefined);
+    reachRows = await fetchReachDailyRows(accessToken);
   } catch (err) {
     reachWarnings.push(
       err instanceof Error

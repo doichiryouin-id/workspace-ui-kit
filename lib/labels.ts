@@ -48,7 +48,8 @@ export const PANE3_ANALYTICS = {
   notPublishedYet: "公開日未設定 — 公開後に Studio から数値を入力",
   publishedOn: (date: string) => `公開 ${date}`,
   inputSection: "分析数値（手入力）",
-  inputHint: "URL を入れると自動取得します。不足分は手入力も可能です",
+  inputHint:
+    "URL を入れると自動取得します。不足分は手入力も可能（入力すると上のカードにも反映）",
   fetchFromYouTube: "YouTube から再取得",
   fetching: "取得中…",
   fetchError: "取得に失敗しました",
@@ -68,6 +69,7 @@ export const PANE3_ANALYTICS = {
   subscribersGained: "チャンネル登録者増",
   memo: "メモ",
   memoPlaceholder: "取得日・所感（例: Studio 5/28 時点）",
+  impCtrPending: "反映待ち",
 } as const;
 
 // ===== Pane 3 ダッシュボードのセクション見出し（Pane 4 等で参照） =====

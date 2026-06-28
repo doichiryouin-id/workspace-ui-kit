@@ -218,6 +218,7 @@ export function VideoAnalyticsPane({
                     ariaLabel={PANE3_ANALYTICS.views}
                     placeholder="1280"
                     inputType="text"
+                    live
                   />
                 </InlineFieldRow>
                 <InlineFieldRow label={PANE3_ANALYTICS.impressions}>
@@ -226,6 +227,7 @@ export function VideoAnalyticsPane({
                     onSave={(v) => onUpdateAnalytics({ impressions: v })}
                     ariaLabel={PANE3_ANALYTICS.impressions}
                     placeholder="31200"
+                    live
                   />
                 </InlineFieldRow>
                 <InlineFieldRow label={PANE3_ANALYTICS.ctr}>
@@ -234,6 +236,7 @@ export function VideoAnalyticsPane({
                     onSave={(v) => onUpdateAnalytics({ ctrPercent: v })}
                     ariaLabel={PANE3_ANALYTICS.ctr}
                     placeholder="4.1"
+                    live
                   />
                 </InlineFieldRow>
                 <InlineFieldRow label={PANE3_ANALYTICS.averageViewRate}>
@@ -244,6 +247,7 @@ export function VideoAnalyticsPane({
                     }
                     ariaLabel={PANE3_ANALYTICS.averageViewRate}
                     placeholder="41.2"
+                    live
                   />
                 </InlineFieldRow>
                 <InlineFieldRow label={PANE3_ANALYTICS.averageViewDuration}>
@@ -299,36 +303,49 @@ export function VideoAnalyticsPane({
 }
 
 function MetricGrid({ analytics }: { analytics: VideoAnalytics }) {
+  const hasViews = analytics.views.trim().length > 0;
+  const impPending = hasViews && !analytics.impressions.trim();
+  const ctrPending = hasViews && !analytics.ctrPercent.trim();
+
   const items = [
     {
       label: PANE3_ANALYTICS.views,
       value: formatMetric(analytics.views),
       suffix: "",
+      pending: false,
       icon: Eye,
     },
     {
       label: PANE3_ANALYTICS.impressions,
-      value: formatMetric(analytics.impressions),
+      value: impPending
+        ? PANE3_ANALYTICS.impCtrPending
+        : formatMetric(analytics.impressions),
       suffix: "",
+      pending: impPending,
       icon: BarChart3,
     },
     {
       label: PANE3_ANALYTICS.ctr,
-      value: formatMetric(analytics.ctrPercent),
-      suffix: analytics.ctrPercent.trim() ? "%" : "",
+      value: ctrPending
+        ? PANE3_ANALYTICS.impCtrPending
+        : formatMetric(analytics.ctrPercent),
+      suffix:
+        !ctrPending && analytics.ctrPercent.trim() ? "%" : "",
+      pending: ctrPending,
       icon: MousePointerClick,
     },
     {
       label: PANE3_ANALYTICS.averageViewRate,
       value: formatMetric(analytics.averageViewRatePercent),
       suffix: analytics.averageViewRatePercent.trim() ? "%" : "",
+      pending: false,
       icon: Timer,
     },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      {items.map(({ label, value, suffix, icon: Icon }) => (
+      {items.map(({ label, value, suffix, pending, icon: Icon }) => (
         <Card key={label} size="sm">
           <CardHeader className="pb-1">
             <CardDescription className="flex items-center gap-1.5">
@@ -337,9 +354,15 @@ function MetricGrid({ analytics }: { analytics: VideoAnalytics }) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold tabular-nums text-foreground">
+            <p
+              className={
+                pending
+                  ? "text-base font-medium text-muted-foreground"
+                  : "text-2xl font-semibold tabular-nums text-foreground"
+              }
+            >
               {value}
-              {value !== "—" && suffix ? (
+              {!pending && value !== "—" && suffix ? (
                 <span className="ml-0.5 text-base font-medium">{suffix}</span>
               ) : null}
             </p>

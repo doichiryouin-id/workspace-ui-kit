@@ -204,3 +204,27 @@ export function aggregateReachForRange(
     ctrPercent: ((weightedClicks / totalImpressions) * 100).toFixed(1),
   };
 }
+
+/** 動画の reach 日次行をすべて合算（公開日不明時のフォールバック）。 */
+export function aggregateReachLifetimeForVideo(
+  rows: ReachDailyRow[],
+  videoId: string,
+): { impressions: number; ctrPercent: string } | null {
+  const filtered = rows.filter((row) => row.videoId === videoId);
+  if (filtered.length === 0) return null;
+
+  let totalImpressions = 0;
+  let weightedClicks = 0;
+  for (const row of filtered) {
+    totalImpressions += row.impressions;
+    weightedClicks += row.impressions * row.ctrRatio;
+  }
+  if (totalImpressions <= 0) {
+    return { impressions: 0, ctrPercent: "0.0" };
+  }
+
+  return {
+    impressions: totalImpressions,
+    ctrPercent: ((weightedClicks / totalImpressions) * 100).toFixed(1),
+  };
+}

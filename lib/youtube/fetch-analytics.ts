@@ -11,6 +11,7 @@ import {
 import { fetchLifetimeVideoViews } from "@/lib/youtube/analytics-views";
 import {
   aggregateReachForRange,
+  aggregateReachLifetimeForVideo,
   fetchReachDailyRows,
 } from "@/lib/youtube/reporting-reach";
 import { parseYouTubeVideoId } from "@/lib/youtube/video-id";
@@ -153,8 +154,11 @@ async function fetchReachLifetimeMetrics(
 ): Promise<Partial<VideoAnalytics>> {
   const endDate = new Date().toISOString().slice(0, 10);
   const startDate = publishDate?.trim() || "2020-01-01";
-  const rows = await fetchReachDailyRows(accessToken, startDate);
-  const reach = aggregateReachForRange(rows, videoId, startDate, endDate);
+  // レポートファイルは minDate で絞らない（公開日より前に開始した CSV にデータがあるため）
+  const rows = await fetchReachDailyRows(accessToken);
+  let reach =
+    aggregateReachForRange(rows, videoId, startDate, endDate) ??
+    aggregateReachLifetimeForVideo(rows, videoId);
   if (!reach) return {};
 
   return {

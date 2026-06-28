@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   aggregateReachForRange,
+  aggregateReachLifetimeForVideo,
   parseReachReportCsv,
 } from "@/lib/youtube/reporting-reach";
 
@@ -44,6 +45,20 @@ describe("aggregateReachForRange", () => {
     expect(result).toEqual({
       impressions: 1500,
       ctrPercent: "2.7",
+    });
+  });
+
+  it("動画の全期間 IMP/CTR を合算", () => {
+    const lifetimeRows = parseReachReportCsv(
+      [
+        "date,channel_id,video_id,video_thumbnail_impressions,video_thumbnail_impressions_ctr",
+        "2026-05-01,UCxxx,vid123,800,0.04",
+        "2026-06-01,UCxxx,vid123,200,0.06",
+      ].join("\n"),
+    );
+    expect(aggregateReachLifetimeForVideo(lifetimeRows, "vid123")).toEqual({
+      impressions: 1000,
+      ctrPercent: "4.4",
     });
   });
 });
