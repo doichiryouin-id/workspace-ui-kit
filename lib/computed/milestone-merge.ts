@@ -20,7 +20,8 @@ function mergeSnapshot(
   incoming: MilestoneMetrics,
 ): MilestoneMetrics {
   return {
-    views: pickMetric(incoming.views, previous?.views),
+    // 視聴回数は同期結果を常に反映（誤った 0 を次回更新で消せる）
+    views: incoming.views?.trim() ?? "",
     impressions: pickMetric(incoming.impressions, previous?.impressions),
     ctrPercent: pickMetric(incoming.ctrPercent, previous?.ctrPercent),
     computedAt: incoming.computedAt.trim() || previous?.computedAt || "",
