@@ -8,6 +8,7 @@ import {
   readYouTubeConfig,
   refreshYouTubeAccessToken,
 } from "@/lib/youtube/oauth";
+import { fetchLifetimeVideoViews } from "@/lib/youtube/analytics-views";
 import { parseYouTubeVideoId } from "@/lib/youtube/video-id";
 import { type VideoAnalytics } from "@/lib/schema";
 
@@ -86,7 +87,7 @@ async function fetchAnalyticsApiMetrics(
     startDate: "2020-01-01",
     endDate,
     metrics:
-      "views,averageViewDuration,averageViewPercentage,subscribersGained",
+      "averageViewDuration,averageViewPercentage,subscribersGained",
     dimensions: "video",
     filters: `video==${videoId}`,
   });
@@ -119,7 +120,6 @@ async function fetchAnalyticsApiMetrics(
 
   const patch: Partial<VideoAnalytics> = {};
 
-  if (byName.views != null) patch.views = String(byName.views);
   if (byName.averageViewPercentage != null) {
     patch.averageViewRatePercent = Number(
       byName.averageViewPercentage,
@@ -171,10 +171,23 @@ export async function fetchYouTubeAnalytics(
 
   if (hasOAuth) {
     try {
+      const accessToken = await refreshYouTubeAccessToken(config);
+      const channelFilter = channelFilterForAnalytics(config);
       Object.assign(
         analytics,
         await fetchAnalyticsApiMetrics(videoId, config),
       );
+      // 視聴回数は Data API を優先。API キーが無いときだけ OAuth 累計を使う。
+      if (!dataApi) {
+        const views = await fetchLifetimeVideoViews(
+          videoId,
+          accessToken,
+          channelFilter,
+        );
+        if (views != null) {
+          analytics.views = String(views);
+        }
+      }
       analyticsApi = true;
       warnings.push(
         "累計 IMP/CTR は Pane 4 の「マイルストーン更新」で取得できます（手入力も可）",

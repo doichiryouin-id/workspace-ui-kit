@@ -4,6 +4,7 @@ import {
   readYouTubeConfig,
   refreshYouTubeAccessToken,
 } from "@/lib/youtube/oauth";
+import { fetchVideoViewsInRange } from "@/lib/youtube/analytics-views";
 import {
   dueMilestoneWindows,
   isDateInRange,
@@ -34,11 +35,6 @@ export type MilestoneFetchResult = {
   warnings: string[];
 };
 
-type AnalyticsReport = {
-  columnHeaders?: Array<{ name?: string }>;
-  rows?: Array<Array<string | number>>;
-};
-
 async function fetchViewsInRange(
   videoId: string,
   startDate: string,
@@ -46,38 +42,13 @@ async function fetchViewsInRange(
   accessToken: string,
   channelFilter: string,
 ): Promise<number | null> {
-  const params = new URLSearchParams({
-    ids: channelFilter,
+  return fetchVideoViewsInRange(
+    videoId,
     startDate,
     endDate,
-    metrics: "views",
-    filters: `video==${videoId}`,
-  });
-
-  const res = await fetch(
-    `https://youtubeanalytics.googleapis.com/v2/reports?${params}`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      cache: "no-store",
-    },
+    accessToken,
+    channelFilter,
   );
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(
-      `YouTube Analytics API エラー（${res.status}）: ${body.slice(0, 120)}`,
-    );
-  }
-
-  const report = (await res.json()) as AnalyticsReport;
-  const headers = report.columnHeaders?.map((h) => h.name ?? "") ?? [];
-  const row = report.rows?.[0];
-  if (!row) return 0;
-
-  const viewsIdx = headers.indexOf("views");
-  if (viewsIdx < 0) return null;
-  const views = Number(row[viewsIdx]);
-  return Number.isFinite(views) ? views : null;
 }
 
 function buildMilestoneMetrics(

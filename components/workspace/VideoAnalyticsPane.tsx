@@ -88,19 +88,22 @@ export function VideoAnalyticsPane({
   const entryKind = entry?.kind;
   const entryUrl = entry?.url ?? "";
   const entryFetchedAt = entry?.analytics.fetchedAt ?? "";
+  const entryViews = entry?.analytics.views ?? "";
 
   useEffect(() => {
     if (!entryId || entryKind === "free") return;
     const url = entryUrl.trim();
     if (!parseYouTubeVideoId(url)) return;
     if (entryFetchedAt.trim()) return;
+    // 手入力済みの視聴回数は自動取得で上書きしない（「YouTube から再取得」は可）
+    if (entryViews.trim()) return;
 
     const key = `${entryId}:${url}`;
     if (lastAutoFetchKey.current === key) return;
 
     lastAutoFetchKey.current = key;
     void runFetch(url);
-  }, [entryId, entryKind, entryUrl, entryFetchedAt, runFetch]);
+  }, [entryId, entryKind, entryUrl, entryFetchedAt, entryViews, runFetch]);
 
   return (
     <section
