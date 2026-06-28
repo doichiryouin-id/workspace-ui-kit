@@ -13,13 +13,18 @@ import {
   aggregateReachForRange,
   aggregateReachLifetimeForVideo,
   fetchReachDailyRows,
+  REACH_REPORT_FILES_PANE3,
+  ReachQuotaExceededError,
 } from "@/lib/youtube/reporting-reach";
+import { PANE3_ANALYTICS } from "@/lib/labels";
 import { parseYouTubeVideoId } from "@/lib/youtube/video-id";
 import { type VideoAnalytics } from "@/lib/schema";
 
 export type YouTubeAnalyticsFetchOptions = {
   /** 累計 IMP/CTR の集計開始日（公開日）。未指定時はレポート全体。 */
   publishDate?: string;
+  /** 手入力済み IMP/CTR があるとき reach API を呼ばない。 */
+  skipReach?: boolean;
 };
 
 export type YouTubeAnalyticsFetchResult = {
@@ -155,7 +160,9 @@ async function fetchReachLifetimeMetrics(
   const endDate = new Date().toISOString().slice(0, 10);
   const startDate = publishDate?.trim() || "2020-01-01";
   // レポートファイルは minDate で絞らない（公開日より前に開始した CSV にデータがあるため）
-  const rows = await fetchReachDailyRows(accessToken);
+  const rows = await fetchReachDailyRows(accessToken, {
+    maxReportFiles: REACH_REPORT_FILES_PANE3,
+  });
   let reach =
     aggregateReachForRange(rows, videoId, startDate, endDate) ??
     aggregateReachLifetimeForVideo(rows, videoId);
@@ -220,27 +227,36 @@ export async function fetchYouTubeAnalytics(
         }
       }
 
-      try {
-        Object.assign(
-          analytics,
-          await fetchReachLifetimeMetrics(
-            videoId,
-            accessToken,
-            options.publishDate,
-          ),
-        );
-      } catch (err) {
-        warnings.push(
-          err instanceof Error
-            ? err.message
-            : "YouTube reach レポート（IMP/CTR）の取得に失敗",
-        );
-      }
+      if (!options.skipReach) {
+        try {
+          Object.assign(
+            analytics,
+            await fetchReachLifetimeMetrics(
+              videoId,
+              accessToken,
+              options.publishDate,
+            ),
+          );
+        } catch (err) {
+          if (err instanceof ReachQuotaExceededError) {
+            warnings.push(PANE3_ANALYTICS.reachQuotaWarning);
+          } else {
+            warnings.push(
+              err instanceof Error
+                ? err.message
+                : "YouTube reach レポート（IMP/CTR）の取得に失敗",
+            );
+          }
+        }
 
-      if (!analytics.impressions?.trim() && !analytics.ctrPercent?.trim()) {
-        warnings.push(
-          "累計 IMP/CTR: reach レポートにまだデータがありません（ジョブ生成後 24〜48h、または手入力）",
-        );
+        const reachQuotaHit = warnings.includes(PANE3_ANALYTICS.reachQuotaWarning);
+        if (
+          !reachQuotaHit &&
+          !analytics.impressions?.trim() &&
+          !analytics.ctrPercent?.trim()
+        ) {
+          warnings.push(PANE3_ANALYTICS.reachEmptyWarning);
+        }
       }
 
       analyticsApi = true;

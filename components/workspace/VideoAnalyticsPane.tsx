@@ -44,7 +44,7 @@ type VideoAnalyticsPaneProps = {
   onUpdateAnalytics: (patch: Partial<VideoAnalytics>) => void;
   fetchAnalytics: (
     url: string,
-    publishDate?: string,
+    options?: { publishDate?: string; skipReach?: boolean },
   ) => Promise<YouTubeAnalyticsFetchResult>;
   width: number;
 };
@@ -68,8 +68,22 @@ export function VideoAnalyticsPane({
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchAnalytics(url, entry?.publishDate);
-        onUpdateAnalytics(result.analytics);
+        const current = entry?.analytics;
+        const skipReach = Boolean(
+          current?.impressions.trim() || current?.ctrPercent.trim(),
+        );
+        const result = await fetchAnalytics(url, {
+          publishDate: entry?.publishDate,
+          skipReach,
+        });
+        const patch: Partial<VideoAnalytics> = { ...result.analytics };
+        if (!patch.impressions?.trim() && current?.impressions.trim()) {
+          patch.impressions = current.impressions;
+        }
+        if (!patch.ctrPercent?.trim() && current?.ctrPercent.trim()) {
+          patch.ctrPercent = current.ctrPercent;
+        }
+        onUpdateAnalytics(patch);
         setWarnings(result.warnings);
       } catch (err) {
         setError(
@@ -84,7 +98,7 @@ export function VideoAnalyticsPane({
         setLoading(false);
       }
     },
-    [entry?.id, entry?.publishDate, fetchAnalytics, onUpdateAnalytics],
+    [entry?.analytics, entry?.id, entry?.publishDate, fetchAnalytics, onUpdateAnalytics],
   );
 
   const entryId = entry?.id;
@@ -192,14 +206,23 @@ export function VideoAnalyticsPane({
               </p>
             ) : null}
             {warnings.length > 0 ? (
-              <ul className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              <ul className="flex flex-col gap-1 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
                 {warnings.map((w) => (
-                  <li key={w}>{w}</li>
+                  <li
+                    key={w}
+                    className={
+                      w === PANE3_ANALYTICS.reachQuotaWarning
+                        ? "text-amber-800 dark:text-amber-200"
+                        : undefined
+                    }
+                  >
+                    {w}
+                  </li>
                 ))}
               </ul>
             ) : null}
 
-            <MetricGrid analytics={entry.analytics} />
+            <MetricGrid analytics={entry.analytics} warnings={warnings} />
 
             <Separator />
 
@@ -226,7 +249,7 @@ export function VideoAnalyticsPane({
                     value={entry.analytics.impressions}
                     onSave={(v) => onUpdateAnalytics({ impressions: v })}
                     ariaLabel={PANE3_ANALYTICS.impressions}
-                    placeholder="31200"
+                    placeholder="例: 31200"
                     live
                   />
                 </InlineFieldRow>
@@ -235,7 +258,7 @@ export function VideoAnalyticsPane({
                     value={entry.analytics.ctrPercent}
                     onSave={(v) => onUpdateAnalytics({ ctrPercent: v })}
                     ariaLabel={PANE3_ANALYTICS.ctr}
-                    placeholder="4.1"
+                    placeholder="例: 4.1"
                     live
                   />
                 </InlineFieldRow>
@@ -302,10 +325,20 @@ export function VideoAnalyticsPane({
   );
 }
 
-function MetricGrid({ analytics }: { analytics: VideoAnalytics }) {
+function MetricGrid({
+  analytics,
+  warnings,
+}: {
+  analytics: VideoAnalytics;
+  warnings: string[];
+}) {
   const hasViews = analytics.views.trim().length > 0;
-  const impPending = hasViews && !analytics.impressions.trim();
-  const ctrPending = hasViews && !analytics.ctrPercent.trim();
+  const rateLimited = warnings.includes(PANE3_ANALYTICS.reachQuotaWarning);
+  const fetched = analytics.fetchedAt.trim().length > 0;
+  const impPending =
+    hasViews && !analytics.impressions.trim() && fetched && !rateLimited;
+  const ctrPending =
+    hasViews && !analytics.ctrPercent.trim() && fetched && !rateLimited;
 
   const items = [
     {

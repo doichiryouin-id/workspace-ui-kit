@@ -5,12 +5,24 @@
 const REPORTING_BASE = "https://youtubereporting.googleapis.com/v1";
 export const REACH_REPORT_TYPE_ID = "channel_reach_basic_a1";
 
+/** Pane 3 累計用。日次レポートを丸ごと取りすぎない。 */
+export const REACH_REPORT_FILES_PANE3 = 7;
+/** マイルストーン 30 日分をカバーする目安。 */
+export const REACH_REPORT_FILES_MILESTONES = 35;
+
+const REACH_ROWS_CACHE_MS = 10 * 60 * 1000;
+
 export type ReachDailyRow = {
   date: string;
   videoId: string;
   impressions: number;
   /** 0〜1 の比率。 */
   ctrRatio: number;
+};
+
+export type FetchReachDailyRowsOptions = {
+  /** 取得する CSV ファイル数の上限（新しい順）。未指定は全件。 */
+  maxReportFiles?: number;
 };
 
 type ReportJob = {
@@ -25,6 +37,24 @@ type ReportFile = {
   endTime?: string;
   createTime?: string;
 };
+
+/** Reporting API の 1 分あたり上限。 */
+export class ReachQuotaExceededError extends Error {
+  constructor() {
+    super("ReachQuotaExceeded");
+    this.name = "ReachQuotaExceededError";
+  }
+}
+
+let reachRowsCache: {
+  rows: ReachDailyRow[];
+  expiresAt: number;
+  maxKey: string | number;
+} | null = null;
+
+export function clearReachRowsCache(): void {
+  reachRowsCache = null;
+}
 
 function parseCsvLine(line: string): string[] {
   const cells: string[] = [];
@@ -100,6 +130,10 @@ async function reportingFetch<T>(
     cache: "no-store",
   });
 
+  if (res.status === 429) {
+    throw new ReachQuotaExceededError();
+  }
+
   if (!res.ok) {
     const body = await res.text();
     throw new Error(
@@ -139,23 +173,43 @@ export async function ensureReachReportJob(accessToken: string): Promise<string>
   return created.id;
 }
 
-/** 利用可能な reach CSV をすべて取得して日次行に展開。 */
+function selectReportFiles(
+  reports: ReportFile[],
+  maxReportFiles?: number,
+): ReportFile[] {
+  const sorted = reports
+    .filter((report) => report.id && report.startTime)
+    .sort((a, b) =>
+      (b.startTime ?? "").localeCompare(a.startTime ?? ""),
+    );
+  if (maxReportFiles == null || maxReportFiles <= 0) return sorted;
+  return sorted.slice(0, maxReportFiles);
+}
+
+/** 利用可能な reach CSV を日次行に展開（キャッシュ・件数上限付き）。 */
 export async function fetchReachDailyRows(
   accessToken: string,
-  minDate?: string,
+  options: FetchReachDailyRowsOptions = {},
 ): Promise<ReachDailyRow[]> {
+  const cacheKey = options.maxReportFiles ?? "all";
+  if (
+    reachRowsCache &&
+    Date.now() < reachRowsCache.expiresAt &&
+    reachRowsCache.maxKey === cacheKey
+  ) {
+    return reachRowsCache.rows;
+  }
+
   const jobId = await ensureReachReportJob(accessToken);
   const listed = await reportingFetch<{ reports?: ReportFile[] }>(
     `/jobs/${jobId}/reports`,
     accessToken,
   );
 
-  const reports = (listed.reports ?? []).filter((report) => {
-    if (!report.id || !report.startTime) return false;
-    if (!minDate) return true;
-    const day = report.startTime.slice(0, 10);
-    return day >= minDate;
-  });
+  const reports = selectReportFiles(
+    listed.reports ?? [],
+    options.maxReportFiles,
+  );
 
   const allRows: ReachDailyRow[] = [];
   for (const report of reports) {
@@ -166,10 +220,19 @@ export async function fetchReachDailyRows(
         cache: "no-store",
       },
     );
+    if (res.status === 429) {
+      throw new ReachQuotaExceededError();
+    }
     if (!res.ok) continue;
     const text = await res.text();
     allRows.push(...parseReachReportCsv(text));
   }
+
+  reachRowsCache = {
+    rows: allRows,
+    expiresAt: Date.now() + REACH_ROWS_CACHE_MS,
+    maxKey: cacheKey,
+  };
 
   return allRows;
 }

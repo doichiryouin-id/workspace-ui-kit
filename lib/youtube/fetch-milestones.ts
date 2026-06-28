@@ -14,8 +14,11 @@ import {
 import {
   aggregateReachForRange,
   fetchReachDailyRows,
+  REACH_REPORT_FILES_MILESTONES,
+  ReachQuotaExceededError,
   type ReachDailyRow,
 } from "@/lib/youtube/reporting-reach";
+import { PANE3_ANALYTICS } from "@/lib/labels";
 import { parseYouTubeVideoId } from "@/lib/youtube/video-id";
 import {
   type MilestoneMap,
@@ -168,12 +171,16 @@ export async function fetchMilestonesBatch(
   let reachRows: ReachDailyRow[] = [];
   const reachWarnings: string[] = [];
   try {
-    reachRows = await fetchReachDailyRows(accessToken);
+    reachRows = await fetchReachDailyRows(accessToken, {
+      maxReportFiles: REACH_REPORT_FILES_MILESTONES,
+    });
   } catch (err) {
     reachWarnings.push(
-      err instanceof Error
-        ? err.message
-        : "YouTube reach レポートの取得に失敗",
+      err instanceof ReachQuotaExceededError
+        ? PANE3_ANALYTICS.reachQuotaWarning
+        : err instanceof Error
+          ? err.message
+          : "YouTube reach レポートの取得に失敗",
     );
   }
 

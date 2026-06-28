@@ -70,6 +70,10 @@ export const PANE3_ANALYTICS = {
   memo: "メモ",
   memoPlaceholder: "取得日・所感（例: Studio 5/28 時点）",
   impCtrPending: "反映待ち",
+  reachQuotaWarning:
+    "Reporting API の1分あたり上限に達しました。1〜2分待って再取得するか、下の欄に Studio の IMP/CTR を入力してください",
+  reachEmptyWarning:
+    "累計 IMP/CTR: reach レポートにまだデータがありません（ジョブ生成後 24〜48h、または下の欄に手入力）",
 } as const;
 
 // ===== Pane 3 ダッシュボードのセクション見出し（Pane 4 等で参照） =====
