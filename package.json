@@ -11,7 +11,10 @@
     "format:check": "prettier --check .",
     "check:radius": "node scripts/check-radius-drift.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "setup:youtube-oauth": "node scripts/youtube-oauth-setup.mjs",
+    "sync:youtube-env-vercel": "bash scripts/sync-youtube-env-to-vercel.sh",
+    "deploy:diagram": "npx surge docs/submission"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
