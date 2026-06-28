@@ -40,7 +40,8 @@ export async function fetchVideoViewsInRange(
   const report = (await res.json()) as AnalyticsReport;
   const headers = report.columnHeaders?.map((h) => h.name ?? "") ?? [];
   const row = report.rows?.[0];
-  if (!row) return 0;
+  // 行なし = データ未取得（0 視聴とは限らない）
+  if (!row) return null;
 
   const viewsIdx = headers.indexOf("views");
   if (viewsIdx < 0) return null;

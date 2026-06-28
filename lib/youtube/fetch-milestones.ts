@@ -100,7 +100,11 @@ async function computeMilestonesForVideo(
 
     if (views === null) {
       warnings.push(
-        `${window} 視聴回数: Analytics API から取得できませんでした（公開日・YOUTUBE_CHANNEL_ID を確認）`,
+        `${window} 視聴回数: この期間の Analytics データがありません（公開日・チャンネル設定を確認）`,
+      );
+    } else if (views === 0) {
+      warnings.push(
+        `${window} 視聴回数: 0（この期間に視聴が記録されていないか、Analytics の反映待ち）`,
       );
     }
       reachRows,
