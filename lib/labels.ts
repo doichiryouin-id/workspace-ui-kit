@@ -114,7 +114,7 @@ export const PANE4_COMPARE = {
     "24h / 3日 / 1週間 / 1ヶ月 / 累計を横並び表示。→ 横スクロールで全体を確認",
   pending: "未到達",
   milestoneOAuthMissing:
-    "YouTube OAuth 未設定 — IMP・CTR の自動取得には .env.local の CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN が必要です（docs/YOUTUBE-ANALYTICS-SETUP.md）",
+    "YouTube OAuth 未設定 — Vercel の Environment Variables に YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET / YOUTUBE_REFRESH_TOKEN を設定して Redeploy（手順: docs/YOUTUBE-ANALYTICS-SETUP.md）",
   milestoneSyncError: "マイルストーン取得に失敗しました",
   milestoneSyncNoData:
     "集計可能なマイルストーンがありません（公開日の翌日以降に 24h、以降 3日 / 1週間 / 1ヶ月と順に反映）",

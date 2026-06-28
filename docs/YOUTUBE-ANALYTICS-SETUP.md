@@ -132,4 +132,17 @@ curl -s http://localhost:3000/api/youtube-analytics/status | python3 -m json.too
 
 ## 本番（Vercel）でも使う場合
 
-Vercel の **Environment Variables** に同じ `YOUTUBE_*` を設定し、Redeploy してください。
+1. [Vercel Dashboard](https://vercel.com) → プロジェクト → **Settings → Environment Variables**
+2. **Production**（必要なら Preview も）に以下を追加:
+
+| 変数名 | 必須 | 用途 |
+|--------|------|------|
+| `YOUTUBE_CLIENT_ID` | マイルストーン IMP/CTR | OAuth |
+| `YOUTUBE_CLIENT_SECRET` | 同上 | OAuth |
+| `YOUTUBE_REFRESH_TOKEN` | 同上 | OAuth |
+| `YOUTUBE_API_KEY` | 任意 | 視聴回数・高評価（Pane 3） |
+
+3. **Deployments → 最新 → Redeploy**（変数追加だけでは反映されない）
+4. 確認: `https://あなたのドメイン/api/youtube-analytics/status` で `analyticsApi: true`
+
+Google Cloud 側では **YouTube Analytics API** に加え、Pane 4 の IMP/CTR 用に **YouTube Reporting API** も有効化してください。
