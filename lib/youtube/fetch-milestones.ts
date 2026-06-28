@@ -98,7 +98,11 @@ async function computeMilestonesForVideo(
       );
     }
 
-    const reach = aggregateReachForRange(
+    if (views === null) {
+      warnings.push(
+        `${window} 視聴回数: Analytics API から取得できませんでした（公開日・YOUTUBE_CHANNEL_ID を確認）`,
+      );
+    }
       reachRows,
       videoId,
       range.startDate,

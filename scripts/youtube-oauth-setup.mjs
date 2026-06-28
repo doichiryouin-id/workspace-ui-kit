@@ -202,7 +202,7 @@ Google Cloud で未実施の場合は先に以下を完了してください:
 6. 「Exchange authorization code for tokens」を押す
 7. 表示された Refresh token をコピー
 
-※ refresh_token が空のときは ⚙ の「Force prompt」を ON にして Step 4〜6 をやり直し
+※ refresh_token が空のときは ⚙ の Force prompt → **Consent screen** にして Step 4〜6 をやり直し
 `);
 
   const apiKey = await prompt("YOUTUBE_API_KEY（任意・Enter でスキップ）", {

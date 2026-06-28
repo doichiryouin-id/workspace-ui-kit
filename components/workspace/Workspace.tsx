@@ -12,6 +12,7 @@ import {
   useWorkspacePaneWidths,
   type PaneWidthKey,
 } from "@/hooks/useWorkspacePaneWidths";
+import { mergeMilestoneMaps } from "@/lib/computed/milestone-merge";
 import { isPublishedScheduleEntry } from "@/lib/computed/analytics-compare";
 import { dueMilestoneWindows } from "@/lib/youtube/milestone-windows";
 import {
@@ -227,7 +228,7 @@ function WorkspaceBody({
           if (!patch) return entry;
           return {
             ...entry,
-            milestones: { ...entry.milestones, ...patch },
+            milestones: mergeMilestoneMaps(entry.milestones ?? {}, patch),
           };
         }),
       );

@@ -111,7 +111,7 @@ export const PANE4_COMPARE = {
   milestoneHint:
     "公開日からの累計（24h≈2日目 / 3日 / 1週間 / 1ヶ月）。「マイルストーン更新」で IMP・CTR を取得",
   milestoneHintHorizontal:
-    "24h / 3日 / 1週間 / 1ヶ月 / 累計を横並び表示。→ 横スクロールで全体を確認",
+    "24h / 3日 … = マイルストーン更新の期間別データ · 累計 = Pane 3 の視聴回数 · 横スクロール可",
   pending: "未到達",
   milestoneOAuthMissing:
     "YouTube OAuth 未設定 — Vercel の Environment Variables に YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET / YOUTUBE_REFRESH_TOKEN を設定して Redeploy（手順: docs/YOUTUBE-ANALYTICS-SETUP.md）",
