@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  getPublishScheduleList,
   groupShootingScheduleByMonth,
   isShootingEntryFilled,
 } from "@/lib/computed/shooting-schedule";
@@ -51,5 +52,30 @@ describe("isShootingEntryFilled", () => {
       isShootingEntryFilled({ ...base, videoContent: "概要" }),
     ).toBe(true);
     expect(isShootingEntryFilled(base)).toBe(false);
+  });
+});
+
+describe("getPublishScheduleList", () => {
+  it("Pane 2 と同様、videoTitle が空なら videoContent を Pane 1 に表示する", () => {
+    const list = getPublishScheduleList([
+      {
+        id: "sch-06-1",
+        month: 6,
+        kind: "slot",
+        slotIndex: 1,
+        shootDate: "2026-06-10",
+        videoContent: "横になる時にめまいがする",
+        videoTitle: "",
+        thumbnailTitle: "",
+        thumbnailImageUrl: "",
+        publishDate: "2026-07-03",
+        url: "",
+        freeNote: "",
+        analytics: EMPTY_VIDEO_ANALYTICS,
+      },
+    ]);
+    expect(list).toHaveLength(1);
+    expect(list[0]?.title).toBe("横になる時にめまいがする");
+    expect(list[0]?.publishDateLabel).toBe("7/3");
   });
 });

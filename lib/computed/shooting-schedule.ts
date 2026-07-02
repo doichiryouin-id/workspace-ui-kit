@@ -85,7 +85,10 @@ export function getPublishScheduleList(
       id: e.id,
       publishDate: e.publishDate.trim(),
       publishDateLabel: formatScheduleDateShort(e.publishDate),
-      title: e.videoTitle.trim() || "（タイトル未入力）",
+      title:
+        e.videoTitle.trim() ||
+        e.videoContent.trim() ||
+        "（タイトル未入力）",
       month: e.month,
     }))
     .sort((a, b) => a.publishDate.localeCompare(b.publishDate, "ja"));
