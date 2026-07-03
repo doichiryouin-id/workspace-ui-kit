@@ -13,7 +13,7 @@
  * 雛形では候補者の「氏名・採用担当・連絡先・希望年収（min/max）」等で再利用。
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -35,20 +35,57 @@ export type InlineTextFieldProps = {
   live?: boolean;
 };
 
-export function InlineTextField({
+type SharedInputProps = Pick<
+  InlineTextFieldProps,
+  "value" | "onSave" | "ariaLabel" | "inputType" | "placeholder" | "className"
+>;
+
+function DeferredInlineTextField({
   value,
   onSave,
   ariaLabel,
   inputType = "text",
   placeholder,
   className,
-  live = false,
-}: InlineTextFieldProps) {
-  const [draft, setDraft] = useState(value);
+}: SharedInputProps) {
+  return (
+    <Input
+      key={value}
+      type={inputType}
+      defaultValue={value}
+      placeholder={placeholder ?? "未設定"}
+      aria-label={ariaLabel}
+      onBlur={(e) => {
+        if (e.target.value !== value) onSave(e.target.value);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          (e.target as HTMLInputElement).blur();
+        } else if (e.key === "Escape") {
+          (e.target as HTMLInputElement).value = value;
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      className={cn("h-8 bg-card", className)}
+    />
+  );
+}
 
-  useEffect(() => {
+function LiveInlineTextField({
+  value,
+  onSave,
+  ariaLabel,
+  inputType = "text",
+  placeholder,
+  className,
+}: SharedInputProps) {
+  const [draft, setDraft] = useState(value);
+  const [prevValue, setPrevValue] = useState(value);
+
+  if (value !== prevValue) {
+    setPrevValue(value);
     setDraft(value);
-  }, [value]);
+  }
 
   return (
     <Input
@@ -58,21 +95,28 @@ export function InlineTextField({
       aria-label={ariaLabel}
       onChange={(e) => {
         setDraft(e.target.value);
-        if (live) onSave(e.target.value);
-      }}
-      onBlur={(e) => {
-        if (!live && e.target.value !== value) onSave(e.target.value);
+        onSave(e.target.value);
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           (e.target as HTMLInputElement).blur();
         } else if (e.key === "Escape") {
           setDraft(value);
-          if (live && draft !== value) onSave(value);
+          if (draft !== value) onSave(value);
           (e.target as HTMLInputElement).blur();
         }
       }}
       className={cn("h-8 bg-card", className)}
     />
   );
+}
+
+export function InlineTextField({
+  live = false,
+  ...props
+}: InlineTextFieldProps) {
+  if (live) {
+    return <LiveInlineTextField {...props} />;
+  }
+  return <DeferredInlineTextField {...props} />;
 }
