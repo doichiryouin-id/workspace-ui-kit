@@ -173,7 +173,7 @@ export const PANE2_ROW = {
 /** Pane 2 撮影スケジュール（6〜12月・月4本 + フリー枠）。 */
 export const PANE2_SCHEDULE = {
   headerTitle: "撮影スケジュール",
-  headerSubtitle: "2026年6月〜12月 · 撮影月ごと",
+  headerSubtitle: "第1本〜第4本 + フリー枠",
   shootDate: "撮影日",
   videoContent: "動画の内容",
   videoContentPlaceholder: "ネタ・概要・撮影メモ",

@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * Pane 2「撮影スケジュール」: 6〜12月・月4本 + フリー枠。
+ * Pane 2「撮影スケジュール」: 第1本〜第4本 + フリー枠（月見出しなし）。
  */
 
 import { Link2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
-  groupShootingScheduleByMonth,
+  flattenShootingScheduleForPane2,
   isShootingEntryFilled,
   slotLabel,
 } from "@/lib/computed/shooting-schedule";
@@ -51,49 +51,33 @@ export function ShootingSchedulePane({
   onSelectEntry,
   onUpdateEntry,
 }: ShootingSchedulePaneProps) {
-  const monthGroups = groupShootingScheduleByMonth(entries);
+  const paneEntries = flattenShootingScheduleForPane2(entries);
 
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-6 px-3 py-4">
-        {monthGroups.map((group) => (
-          <section key={group.month} className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-foreground">
-                {group.label}
-              </h3>
-              <span className="text-xs text-muted-foreground">
-                {PANE2_SCHEDULE.filledSummary(
-                  group.filledCount,
-                  group.slots.length + (group.freeEntry ? 1 : 0),
-                )}
-              </span>
-            </div>
-            <ul className="flex flex-col gap-3">
-              {group.slots.map((entry) => (
-                <ScheduleSlotCard
-                  key={entry.id}
-                  entry={entry}
-                  label={slotLabel(entry.slotIndex ?? 1)}
-                  selected={selectedEntryId === entry.id}
-                  onSelect={() => onSelectEntry(entry.id)}
-                  onUpdate={(patch) => onUpdateEntry(entry.id, patch)}
-                />
-              ))}
-            </ul>
-            {group.freeEntry ? (
+      <ul className="flex flex-col gap-3 px-3 py-4">
+        {paneEntries.map((entry) =>
+          entry.kind === "free" ? (
+            <li key={entry.id}>
               <FreeSlotCard
-                entry={group.freeEntry}
-                selected={selectedEntryId === group.freeEntry.id}
-                onSelect={() => onSelectEntry(group.freeEntry!.id)}
-                onUpdate={(patch) =>
-                  onUpdateEntry(group.freeEntry!.id, patch)
-                }
+                entry={entry}
+                selected={selectedEntryId === entry.id}
+                onSelect={() => onSelectEntry(entry.id)}
+                onUpdate={(patch) => onUpdateEntry(entry.id, patch)}
               />
-            ) : null}
-          </section>
-        ))}
-      </div>
+            </li>
+          ) : (
+            <ScheduleSlotCard
+              key={entry.id}
+              entry={entry}
+              label={slotLabel(entry.slotIndex ?? 1)}
+              selected={selectedEntryId === entry.id}
+              onSelect={() => onSelectEntry(entry.id)}
+              onUpdate={(patch) => onUpdateEntry(entry.id, patch)}
+            />
+          ),
+        )}
+      </ul>
     </ScrollArea>
   );
 }

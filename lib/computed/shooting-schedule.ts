@@ -75,6 +75,17 @@ export function groupShootingScheduleByMonth(
   });
 }
 
+/** Pane 2: 月見出しなしの表示順（各月 slot 1〜4 → フリー枠、月順 6〜12）。 */
+export function flattenShootingScheduleForPane2(
+  entries: ShootingScheduleEntry[],
+  months: readonly number[] = SHOOTING_SCHEDULE_MONTHS,
+): ShootingScheduleEntry[] {
+  return groupShootingScheduleByMonth(entries, months).flatMap((group) => [
+    ...group.slots,
+    ...(group.freeEntry ? [group.freeEntry] : []),
+  ]);
+}
+
 /** Pane 1: 公開予定日 + タイトル一覧（撮影スケジュールの slot から派生）。 */
 export function getPublishScheduleList(
   entries: ShootingScheduleEntry[],

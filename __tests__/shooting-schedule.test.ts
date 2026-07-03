@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  flattenShootingScheduleForPane2,
   getPublishScheduleList,
   groupShootingScheduleByMonth,
   isShootingEntryFilled,
@@ -24,6 +25,25 @@ describe("shooting-schedule.json", () => {
     expect(groups[0]?.slots).toHaveLength(8);
     expect(groups[0]?.freeEntry).not.toBeNull();
     expect(groups.reduce((n, g) => n + g.slots.length, 0)).toBe(32);
+  });
+
+  it("Pane 2 用フラット一覧は月見出しなしで slot → フリーの順", () => {
+    const parsed = shootingScheduleSchema.parse(shootingScheduleData);
+    const groups = groupShootingScheduleByMonth(parsed);
+    const flat = flattenShootingScheduleForPane2(parsed);
+    const june = groups[0]!;
+
+    expect(flat).toHaveLength(
+      groups.reduce(
+        (n, g) => n + g.slots.length + (g.freeEntry ? 1 : 0),
+        0,
+      ),
+    );
+    expect(flat[0]?.kind).toBe("slot");
+    expect(flat[0]?.slotIndex).toBe(1);
+    expect(flat[june.slots.length]?.kind).toBe("free");
+    expect(flat[june.slots.length + 1]?.month).toBe(7);
+    expect(flat[june.slots.length + 1]?.slotIndex).toBe(1);
   });
 });
 
