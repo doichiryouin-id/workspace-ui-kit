@@ -27,8 +27,8 @@ export function VideoPlanListPane({
 }: VideoPlanListPaneProps) {
   return (
     <section
-      className="flex shrink-0 flex-col border-r border-border bg-background"
-      style={{ width }}
+      className="flex min-w-0 shrink flex-col border-r border-border bg-background"
+      style={{ flex: `1 1 ${width}px` }}
     >
       <header className="flex shrink-0 border-b border-border px-3 py-2.5">
         <h2 className="truncate text-sm font-semibold text-foreground">

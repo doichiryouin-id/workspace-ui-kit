@@ -124,19 +124,19 @@ export function VideoAnalyticsPane({
 
   return (
     <section
-      className="min-w-0 shrink-0 bg-canvas"
-      style={{ width }}
+      className="min-w-0 shrink bg-canvas"
+      style={{ flex: `1 1 ${width}px` }}
     >
       <header className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
         <h2 className="text-sm font-semibold text-foreground">
           {PANE3_ANALYTICS.headerTitle}
         </h2>
-        {entry && entry.kind !== "free" && entry.url.trim() ? (
+        {entry && entry.kind !== "free" ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={loading}
+            disabled={loading || !entry.url.trim()}
             onClick={() => void runFetch(entry.url.trim(), true)}
           >
             <RefreshCw

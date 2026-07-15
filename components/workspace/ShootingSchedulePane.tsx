@@ -4,7 +4,7 @@
  * Pane 2「撮影スケジュール」: 枠カード + フリー枠（月・本数ラベルなし）。
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -48,19 +48,34 @@ export function ShootingSchedulePane({
   onUpdateEntry,
 }: ShootingSchedulePaneProps) {
   const paneEntries = flattenShootingScheduleForPane2(entries);
+  const rootRef = useRef<HTMLDivElement>(null);
 
-  // Pane 1 / 4 から選んだ枠へスクロールして、撮影スケジュール上でも同じ動画を見えるようにする
+  // Pane 1 / 4 から選んだ枠へ、Pane 2 内だけスクロール（親まで横スクロールして Pane 3/4 が消えないようにする）
   useEffect(() => {
     if (!selectedEntryId) return;
     const frame = requestAnimationFrame(() => {
-      document
-        .getElementById(shootingScheduleDomId(selectedEntryId))
-        ?.scrollIntoView({ block: "start", behavior: "smooth" });
+      const root = rootRef.current;
+      const target = document.getElementById(
+        shootingScheduleDomId(selectedEntryId),
+      );
+      if (!root || !target) return;
+
+      const viewport = root.querySelector<HTMLElement>(
+        '[data-slot="scroll-area-viewport"]',
+      );
+      if (!viewport) return;
+
+      const viewRect = viewport.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const nextTop =
+        viewport.scrollTop + (targetRect.top - viewRect.top) - 12;
+      viewport.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
     });
     return () => cancelAnimationFrame(frame);
   }, [selectedEntryId]);
 
   return (
+    <div ref={rootRef} className="flex min-h-0 flex-1 flex-col">
     <ScrollArea className="min-h-0 flex-1">
       <ul className="flex flex-col gap-3 px-3 py-4">
         {paneEntries.map((entry) =>
@@ -85,6 +100,7 @@ export function ShootingSchedulePane({
         )}
       </ul>
     </ScrollArea>
+    </div>
   );
 }
 

@@ -329,28 +329,31 @@ function WorkspaceBody({
           onDismissRemote={dismissRemoteUpdate}
         />
         <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-          <VideoPlanListPane
-            shootingSchedule={shootingSchedule}
-            selectedShootingScheduleId={selectedShootingScheduleId}
-            onSelectShootingScheduleEntry={selectShootingScheduleEntry}
-            onUpdateShootingScheduleEntry={updateShootingScheduleEntry}
-            width={widths.pane2}
-          />
-          <PaneResizeHandle
-            label="Pane 2 と 3 の幅を調整"
-            onResize={(delta) => resizePanes("pane2", "pane3", delta)}
-          />
-          <VideoAnalyticsPane
-            entry={activeScheduleEntry ?? null}
-            onUpdateAnalytics={updateScheduleAnalytics}
-            fetchAnalytics={fetchYouTubeAnalyticsForSchedule}
-            width={widths.pane3}
-          />
-          <PaneResizeHandle
-            label="Pane 3 と 4 の幅を調整"
-            disabled={!pane4Open}
-            onResize={(delta) => resizePanes("pane3", "pane4", delta)}
-          />
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+            <VideoPlanListPane
+              shootingSchedule={shootingSchedule}
+              selectedShootingScheduleId={selectedShootingScheduleId}
+              onSelectShootingScheduleEntry={selectShootingScheduleEntry}
+              onUpdateShootingScheduleEntry={updateShootingScheduleEntry}
+              width={widths.pane2}
+            />
+            <PaneResizeHandle
+              label="Pane 2 と 3 の幅を調整"
+              onResize={(delta) => resizePanes("pane2", "pane3", delta)}
+            />
+            <VideoAnalyticsPane
+              entry={activeScheduleEntry ?? null}
+              onUpdateAnalytics={updateScheduleAnalytics}
+              fetchAnalytics={fetchYouTubeAnalyticsForSchedule}
+              width={widths.pane3}
+            />
+            {pane4Open ? (
+              <PaneResizeHandle
+                label="Pane 3 と 4 の幅を調整"
+                onResize={(delta) => resizePanes("pane3", "pane4", delta)}
+              />
+            ) : null}
+          </div>
           <AnalyticsComparePane
             entries={shootingSchedule}
             selectedEntryId={selectedShootingScheduleId}
