@@ -32,18 +32,14 @@ describe("shooting-schedule.json", () => {
     const groups = groupShootingScheduleByMonth(parsed);
     const flat = flattenShootingScheduleForPane2(parsed);
     const june = groups[0]!;
+    const slotCount = groups.reduce((n, g) => n + g.slots.length, 0);
 
-    expect(flat).toHaveLength(
-      groups.reduce(
-        (n, g) => n + g.slots.length + (g.freeEntry ? 1 : 0),
-        0,
-      ),
-    );
+    expect(flat).toHaveLength(slotCount + 1);
     expect(flat[0]?.kind).toBe("slot");
     expect(flat[0]?.slotIndex).toBe(1);
-    expect(flat[june.slots.length]?.kind).toBe("free");
-    expect(flat[june.slots.length + 1]?.month).toBe(7);
-    expect(flat[june.slots.length + 1]?.slotIndex).toBe(1);
+    expect(flat[slotCount]?.kind).toBe("free");
+    expect(flat[slotCount - 1]?.month).toBe(12);
+    expect(flat[june.slots.length - 1]?.month).toBe(6);
   });
 });
 

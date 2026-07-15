@@ -30,13 +30,10 @@ export function VideoPlanListPane({
       className="flex shrink-0 flex-col border-r border-border bg-background"
       style={{ width }}
     >
-      <header className="flex shrink-0 flex-col gap-0.5 border-b border-border px-3 py-2.5">
+      <header className="flex shrink-0 border-b border-border px-3 py-2.5">
         <h2 className="truncate text-sm font-semibold text-foreground">
           {PANE2_SCHEDULE.headerTitle}
         </h2>
-        <p className="truncate text-xs text-muted-foreground">
-          {PANE2_SCHEDULE.headerSubtitle}
-        </p>
       </header>
       <ShootingSchedulePane
         entries={shootingSchedule}

@@ -35,10 +35,6 @@ export function formatScheduleDateShort(iso: string): string {
   return d ? format(d, "M/d") : "—";
 }
 
-export function slotLabel(slotIndex: number): string {
-  return `第${slotIndex}本`;
-}
-
 export function isShootingEntryFilled(entry: ShootingScheduleEntry): boolean {
   if (entry.kind === "free") {
     return entry.freeNote.trim() !== "";
@@ -75,15 +71,15 @@ export function groupShootingScheduleByMonth(
   });
 }
 
-/** Pane 2: 月見出しなしの表示順（各月 slot 1〜4 → フリー枠、月順 6〜12）。 */
+/** Pane 2: 月見出しなし。全 slot を月順に並べ、フリー枠は末尾に1つだけ。 */
 export function flattenShootingScheduleForPane2(
   entries: ShootingScheduleEntry[],
   months: readonly number[] = SHOOTING_SCHEDULE_MONTHS,
 ): ShootingScheduleEntry[] {
-  return groupShootingScheduleByMonth(entries, months).flatMap((group) => [
-    ...group.slots,
-    ...(group.freeEntry ? [group.freeEntry] : []),
-  ]);
+  const groups = groupShootingScheduleByMonth(entries, months);
+  const slots = groups.flatMap((group) => group.slots);
+  const freeEntry = groups.map((group) => group.freeEntry).find(Boolean) ?? null;
+  return freeEntry ? [...slots, freeEntry] : slots;
 }
 
 /** Pane 1: 公開予定日 + タイトル一覧（撮影スケジュールの slot から派生）。 */

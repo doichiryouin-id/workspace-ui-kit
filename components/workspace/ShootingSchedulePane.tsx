@@ -1,21 +1,17 @@
 "use client";
 
 /**
- * Pane 2「撮影スケジュール」: 第1本〜第4本 + フリー枠（月見出しなし）。
+ * Pane 2「撮影スケジュール」: 枠カード + フリー枠（月・本数ラベルなし）。
  */
 
+import { useEffect } from "react";
 import { Link2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import {
-  flattenShootingScheduleForPane2,
-  isShootingEntryFilled,
-  slotLabel,
-} from "@/lib/computed/shooting-schedule";
+import { flattenShootingScheduleForPane2 } from "@/lib/computed/shooting-schedule";
 import { PANE2_SCHEDULE } from "@/lib/labels";
 import { type ShootingScheduleEntry } from "@/lib/schema";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   InlineDateField,
   InlineFieldRow,
@@ -53,12 +49,23 @@ export function ShootingSchedulePane({
 }: ShootingSchedulePaneProps) {
   const paneEntries = flattenShootingScheduleForPane2(entries);
 
+  // Pane 1 / 4 から選んだ枠へスクロールして、撮影スケジュール上でも同じ動画を見えるようにする
+  useEffect(() => {
+    if (!selectedEntryId) return;
+    const frame = requestAnimationFrame(() => {
+      document
+        .getElementById(shootingScheduleDomId(selectedEntryId))
+        ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selectedEntryId]);
+
   return (
     <ScrollArea className="min-h-0 flex-1">
       <ul className="flex flex-col gap-3 px-3 py-4">
         {paneEntries.map((entry) =>
           entry.kind === "free" ? (
-            <li key={entry.id}>
+            <li key={entry.id} id={shootingScheduleDomId(entry.id)}>
               <FreeSlotCard
                 entry={entry}
                 selected={selectedEntryId === entry.id}
@@ -70,7 +77,6 @@ export function ShootingSchedulePane({
             <ScheduleSlotCard
               key={entry.id}
               entry={entry}
-              label={slotLabel(entry.slotIndex ?? 1)}
               selected={selectedEntryId === entry.id}
               onSelect={() => onSelectEntry(entry.id)}
               onUpdate={(patch) => onUpdateEntry(entry.id, patch)}
@@ -82,45 +88,42 @@ export function ShootingSchedulePane({
   );
 }
 
+function shootingScheduleDomId(entryId: string): string {
+  return `shooting-schedule-${entryId}`;
+}
+
 function ScheduleSlotCard({
   entry,
-  label,
   selected,
   onSelect,
   onUpdate,
 }: {
   entry: ShootingScheduleEntry;
-  label: string;
   selected: boolean;
   onSelect: () => void;
   onUpdate: (patch: ShootingSchedulePatch) => void;
 }) {
-  const filled = isShootingEntryFilled(entry);
-
   return (
-    <li>
+    <li id={shootingScheduleDomId(entry.id)}>
       <article
+        role="button"
+        tabIndex={0}
+        onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
         className={cn(
-          "flex flex-col gap-2 rounded-lg border border-border bg-card p-3 transition-colors",
+          "flex cursor-pointer flex-col gap-2.5 rounded-lg border border-border bg-card p-3 transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
           selected && "border-ring bg-accent/15",
         )}
       >
-        <button
-          type="button"
-          onClick={onSelect}
-          className="flex w-full items-start justify-between gap-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        <div
+          className="flex flex-col gap-2.5"
+          onClick={(e) => e.stopPropagation()}
         >
-          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            {label}
-          </span>
-          <span className="line-clamp-1 text-xs text-muted-foreground">
-            {filled
-              ? entry.videoTitle.trim() || entry.videoContent.trim()
-              : PANE2_SCHEDULE.emptyTitle}
-          </span>
-        </button>
-        <Separator />
-        <div className="flex flex-col gap-2.5">
           <InlineFieldRow label={PANE2_SCHEDULE.shootDate}>
             <InlineDateField
               value={entry.shootDate}
