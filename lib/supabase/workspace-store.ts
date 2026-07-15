@@ -53,6 +53,8 @@ export async function saveWorkspaceSnapshot(
   const supabase = createSupabaseAdmin();
   if (!supabase) throw new Error("Supabase が未設定です");
 
+  const nextUpdatedAt = new Date().toISOString();
+
   if (expectedUpdatedAt) {
     const current = await loadWorkspaceSnapshot();
     if (
@@ -62,6 +64,32 @@ export async function saveWorkspaceSnapshot(
     ) {
       return { updatedAt: current.updatedAt, conflict: true };
     }
+
+    // 直前に読んだ updated_at で条件更新し、読み取り〜書き込みの競合を閉じる
+    const lockStamp = current?.updatedAt ?? expectedUpdatedAt;
+    const { data, error } = await supabase
+      .from("workspace_state")
+      .update({
+        data: snapshot,
+        updated_at: nextUpdatedAt,
+      })
+      .eq("id", ROW_ID)
+      .eq("updated_at", lockStamp)
+      .select("updated_at")
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+
+    if (!data) {
+      const again = await loadWorkspaceSnapshot();
+      return {
+        updatedAt: again?.updatedAt ?? lockStamp,
+        conflict: true,
+      };
+    }
+
+    const row = data as Pick<WorkspaceRow, "updated_at">;
+    return { updatedAt: row.updated_at, conflict: false };
   }
 
   const { data, error } = await supabase
@@ -69,7 +97,7 @@ export async function saveWorkspaceSnapshot(
     .upsert({
       id: ROW_ID,
       data: snapshot,
-      updated_at: new Date().toISOString(),
+      updated_at: nextUpdatedAt,
     })
     .select("updated_at")
     .single();

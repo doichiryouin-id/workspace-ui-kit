@@ -65,11 +65,17 @@ export function SyncStatusBar({
     <div className="flex items-center gap-2 border-b border-border bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
       <Cloud className="size-3.5 shrink-0" aria-hidden="true" />
       <span>{message}</span>
-      {remoteUpdatedAt ? (
-        <span className="ml-auto tabular-nums">
-          {SYNC_UI.lastSynced(remoteUpdatedAt)}
-        </span>
-      ) : null}
+      <span className="ml-auto flex items-center gap-2">
+        {syncEnabled ? (
+          <Button type="button" size="sm" variant="ghost" onClick={onApplyRemote}>
+            <RefreshCw className="size-3.5" aria-hidden="true" />
+            {SYNC_UI.refreshNow}
+          </Button>
+        ) : null}
+        {remoteUpdatedAt ? (
+          <span className="tabular-nums">{SYNC_UI.lastSynced(remoteUpdatedAt)}</span>
+        ) : null}
+      </span>
     </div>
   );
 }

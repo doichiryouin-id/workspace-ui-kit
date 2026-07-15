@@ -46,7 +46,16 @@ type UseWorkspaceSyncResult = {
 
 const SAVE_DEBOUNCE_MS = 1500;
 const SAVED_MESSAGE_MS = 1500;
-const REMOTE_POLL_MS = 12_000;
+const REMOTE_POLL_MS = 5_000;
+
+type RemotePayload =
+  | { enabled: false }
+  | {
+      enabled: true;
+      empty: boolean;
+      updatedAt: string | null;
+      data?: WorkspaceSnapshot;
+    };
 
 export function useWorkspaceSync({
   initialSnapshot,
@@ -66,11 +75,15 @@ export function useWorkspaceSync({
   );
 
   const knownRemoteUpdatedAt = useRef<string | null>(null);
+  const dismissedRemoteUpdatedAt = useRef<string | null>(null);
   const initialLoadComplete = useRef(false);
-  const skipNextSave = useRef(false);
+  const skipSaveTokens = useRef(0);
+  const saveEpoch = useRef(0);
   const saving = useRef(false);
   const lastPersistedFingerprint = useRef<string | null>(null);
   const savedMessageTimer = useRef<number | null>(null);
+  const syncStatusRef = useRef<SyncStatus>("loading");
+  syncStatusRef.current = syncStatus;
 
   const buildSnapshot = useCallback((): WorkspaceSnapshot => {
     return workspaceSnapshotSchema.parse({
@@ -92,7 +105,10 @@ export function useWorkspaceSync({
 
   const applySnapshot = useCallback(
     (snapshot: WorkspaceSnapshot) => {
-      skipNextSave.current = true;
+      // 進行中の保存応答・直後の自動保存を無効化（反映直後の上書き防止）
+      saveEpoch.current += 1;
+      skipSaveTokens.current += 2;
+      saving.current = false;
       setChannels(snapshot.channels);
       setVideoPlans(snapshot.videoPlans);
       setShootingSchedule(snapshot.shootingSchedule);
@@ -117,17 +133,14 @@ export function useWorkspaceSync({
     }, SAVED_MESSAGE_MS);
   }, [clearSavedMessageTimer]);
 
-  const loadRemote = useCallback(async () => {
+  const loadRemote = useCallback(async (): Promise<RemotePayload> => {
     const res = await fetch("/api/workspace", { cache: "no-store" });
     if (!res.ok) throw new Error("クラウドデータの読み込みに失敗しました");
-    return (await res.json()) as
-      | { enabled: false }
-      | {
-          enabled: true;
-          empty: boolean;
-          updatedAt: string | null;
-          data?: WorkspaceSnapshot;
-        };
+    return (await res.json()) as RemotePayload;
+  }, []);
+
+  const normalizeRemoteData = useCallback((data: WorkspaceSnapshot) => {
+    return workspaceSnapshotSchema.parse(data);
   }, []);
 
   const applySnapshotRef = useRef(applySnapshot);
@@ -156,7 +169,8 @@ export function useWorkspaceSync({
 
         setSyncEnabled(true);
         if (!payload.empty && payload.data) {
-          applySnapshotRef.current(payload.data);
+          const normalized = workspaceSnapshotSchema.parse(payload.data);
+          applySnapshotRef.current(normalized);
           knownRemoteUpdatedAt.current = payload.updatedAt;
           setRemoteUpdatedAt(payload.updatedAt);
         } else {
@@ -201,8 +215,16 @@ export function useWorkspaceSync({
   useEffect(() => {
     if (!syncEnabled || !initialLoadComplete.current) return;
 
-    if (skipNextSave.current) {
-      skipNextSave.current = false;
+    // 相手更新の確認中は自分の自動保存を止める（反映前に巻き戻すのを防ぐ）
+    if (
+      syncStatusRef.current === "remote-update" ||
+      syncStatusRef.current === "conflict"
+    ) {
+      return;
+    }
+
+    if (skipSaveTokens.current > 0) {
+      skipSaveTokens.current -= 1;
       return;
     }
 
@@ -214,12 +236,19 @@ export function useWorkspaceSync({
     const timer = window.setTimeout(() => {
       void (async () => {
         if (saving.current) return;
+        if (
+          syncStatusRef.current === "remote-update" ||
+          syncStatusRef.current === "conflict"
+        ) {
+          return;
+        }
 
         const currentFingerprint = workspaceSnapshotFingerprint(buildSnapshot());
         if (currentFingerprint === lastPersistedFingerprint.current) {
           return;
         }
 
+        const epoch = saveEpoch.current;
         saving.current = true;
         clearSavedMessageTimer();
         setSyncStatus("saving");
@@ -239,11 +268,16 @@ export function useWorkspaceSync({
             error?: string;
           };
 
+          // 反映ボタンや新しい編集で無効化された古い保存は捨てる
+          if (epoch !== saveEpoch.current) {
+            return;
+          }
+
           if (res.status === 409 || json.conflict) {
             setSyncStatus("conflict");
             const latest = await loadRemote();
             if (latest.enabled && !latest.empty && latest.data) {
-              setPendingRemote(latest.data);
+              setPendingRemote(normalizeRemoteData(latest.data));
               if (latest.updatedAt) {
                 setRemoteUpdatedAt(latest.updatedAt);
               }
@@ -260,9 +294,13 @@ export function useWorkspaceSync({
           markPersisted();
           showSavedBriefly();
         } catch {
-          setSyncStatus("error");
+          if (epoch === saveEpoch.current) {
+            setSyncStatus("error");
+          }
         } finally {
-          saving.current = false;
+          if (epoch === saveEpoch.current) {
+            saving.current = false;
+          }
         }
       })();
     }, SAVE_DEBOUNCE_MS);
@@ -274,79 +312,142 @@ export function useWorkspaceSync({
     clearSavedMessageTimer,
     loadRemote,
     markPersisted,
+    normalizeRemoteData,
     shootingSchedule,
     showSavedBriefly,
     syncEnabled,
+    syncStatus,
     videoPlans,
   ]);
+
+  const ingestRemoteIfNewer = useCallback(
+    async (options?: { forcePrompt?: boolean }) => {
+      if (saving.current) return;
+      try {
+        const payload = await loadRemote();
+        if (!payload.enabled || payload.empty || !payload.data || !payload.updatedAt) {
+          return;
+        }
+
+        const remoteMs = new Date(payload.updatedAt).getTime();
+        const knownMs = knownRemoteUpdatedAt.current
+          ? new Date(knownRemoteUpdatedAt.current).getTime()
+          : 0;
+        if (remoteMs <= knownMs) return;
+
+        const remoteData = normalizeRemoteData(payload.data);
+        const remoteFingerprint = workspaceSnapshotFingerprint(remoteData);
+        const localFingerprint = workspaceSnapshotFingerprint(buildSnapshot());
+
+        // 中身が同じなら時刻だけ追従
+        if (remoteFingerprint === localFingerprint) {
+          knownRemoteUpdatedAt.current = payload.updatedAt;
+          setRemoteUpdatedAt(payload.updatedAt);
+          markPersisted(remoteData);
+          dismissedRemoteUpdatedAt.current = null;
+          return;
+        }
+
+        const localClean =
+          localFingerprint === lastPersistedFingerprint.current;
+
+        // 自分の未保存編集がなければ自動で取り込む
+        if (localClean && !options?.forcePrompt) {
+          applySnapshot(remoteData);
+          knownRemoteUpdatedAt.current = payload.updatedAt;
+          setRemoteUpdatedAt(payload.updatedAt);
+          setPendingRemote(null);
+          dismissedRemoteUpdatedAt.current = null;
+          setSyncStatus("ready");
+          return;
+        }
+
+        if (
+          !options?.forcePrompt &&
+          dismissedRemoteUpdatedAt.current === payload.updatedAt
+        ) {
+          return;
+        }
+
+        setPendingRemote(remoteData);
+        setRemoteUpdatedAt(payload.updatedAt);
+        setSyncStatus("remote-update");
+      } catch {
+        // ポーリング失敗は黙ってスキップ
+      }
+    },
+    [applySnapshot, buildSnapshot, loadRemote, markPersisted, normalizeRemoteData],
+  );
 
   useEffect(() => {
     if (!syncEnabled || !initialLoadComplete.current) return;
 
-    const poll = window.setInterval(() => {
-      void (async () => {
-        if (saving.current) return;
-        try {
-          const payload = await loadRemote();
-          if (!payload.enabled || payload.empty || !payload.data) return;
-          if (
-            !payload.updatedAt ||
-            !knownRemoteUpdatedAt.current ||
-            new Date(payload.updatedAt).getTime() <=
-              new Date(knownRemoteUpdatedAt.current).getTime()
-          ) {
-            return;
-          }
+    const tick = () => {
+      void ingestRemoteIfNewer();
+    };
 
-          const remoteFingerprint = workspaceSnapshotFingerprint(payload.data);
-          const localFingerprint = workspaceSnapshotFingerprint(buildSnapshot());
-          if (remoteFingerprint === localFingerprint) {
-            knownRemoteUpdatedAt.current = payload.updatedAt;
-            setRemoteUpdatedAt(payload.updatedAt);
-            markPersisted(payload.data);
-            return;
-          }
+    const poll = window.setInterval(tick, REMOTE_POLL_MS);
+    const onFocus = () => tick();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") tick();
+    };
 
-          setPendingRemote(payload.data);
-          setRemoteUpdatedAt(payload.updatedAt);
-          setSyncStatus("remote-update");
-        } catch {
-          // ポーリング失敗は黙ってスキップ
-        }
-      })();
-    }, REMOTE_POLL_MS);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
 
-    return () => window.clearInterval(poll);
-  }, [buildSnapshot, loadRemote, markPersisted, syncEnabled]);
+    return () => {
+      window.clearInterval(poll);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [ingestRemoteIfNewer, syncEnabled]);
 
   const applyRemoteSnapshot = useCallback(async () => {
-    if (pendingRemote) {
-      applySnapshot(pendingRemote);
-      setPendingRemote(null);
-      if (remoteUpdatedAt) {
-        knownRemoteUpdatedAt.current = remoteUpdatedAt;
+    // 必ずクラウドから取り直す（古い pending のまま画面が変わらない・巻き戻るのを防ぐ）
+    try {
+      setSyncStatus("loading");
+      const payload = await loadRemote();
+      if (!payload.enabled || payload.empty || !payload.data) {
+        if (pendingRemote) {
+          applySnapshot(pendingRemote);
+          if (remoteUpdatedAt) {
+            knownRemoteUpdatedAt.current = remoteUpdatedAt;
+          }
+          setPendingRemote(null);
+          dismissedRemoteUpdatedAt.current = null;
+          setSyncStatus("ready");
+          return;
+        }
+        setSyncStatus("error");
+        return;
       }
-      setSyncStatus("ready");
-      return;
-    }
-    const payload = await loadRemote();
-    if (payload.enabled && !payload.empty && payload.data) {
-      applySnapshot(payload.data);
+
+      const remoteData = normalizeRemoteData(payload.data);
+      applySnapshot(remoteData);
       knownRemoteUpdatedAt.current = payload.updatedAt;
       setRemoteUpdatedAt(payload.updatedAt);
       setPendingRemote(null);
+      dismissedRemoteUpdatedAt.current = null;
       setSyncStatus("ready");
+    } catch {
+      setSyncStatus("error");
     }
-  }, [applySnapshot, loadRemote, pendingRemote, remoteUpdatedAt]);
+  }, [
+    applySnapshot,
+    loadRemote,
+    normalizeRemoteData,
+    pendingRemote,
+    remoteUpdatedAt,
+  ]);
 
   const dismissRemoteUpdate = useCallback(() => {
-    setPendingRemote(null);
+    // knownRemoteUpdatedAt は進めない → 保存時に 409 競合で相手の更新を検知できる
     if (remoteUpdatedAt) {
-      knownRemoteUpdatedAt.current = remoteUpdatedAt;
+      dismissedRemoteUpdatedAt.current = remoteUpdatedAt;
     }
-    markPersisted();
+    setPendingRemote(null);
     setSyncStatus("ready");
-  }, [markPersisted, remoteUpdatedAt]);
+  }, [remoteUpdatedAt]);
 
   return {
     syncEnabled,

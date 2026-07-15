@@ -173,7 +173,6 @@ export const PANE2_ROW = {
 /** Pane 2 撮影スケジュール（6〜12月・月4本 + フリー枠）。 */
 export const PANE2_SCHEDULE = {
   headerTitle: "撮影スケジュール",
-  headerSubtitle: "第1本〜第4本 + フリー枠",
   shootDate: "撮影日",
   videoContent: "動画の内容",
   videoContentPlaceholder: "ネタ・概要・撮影メモ",
@@ -193,10 +192,6 @@ export const PANE2_SCHEDULE = {
   urlDropHint: "URLをここにドロップ",
   freeSlot: "フリー枠",
   freeNotePlaceholder: "未定のネタ・メモ・リンクなど自由に",
-  slotLabel: (n: number) => `第${n}本`,
-  filledSummary: (filled: number, total: number) =>
-    `${filled}/${total} 枠入力済`,
-  emptyTitle: "（未入力）",
 } as const;
 
 /** Pane 1 公開予定一覧。 */
@@ -218,6 +213,7 @@ export const SYNC_UI = {
   error: "同期エラー（オフラインまたは設定を確認）",
   remoteUpdate: "相手が更新しました。最新を読み込みますか？",
   applyRemote: "最新を反映",
+  refreshNow: "再読み込み",
   keepMine: "このまま編集",
   lastSynced: (iso: string) => {
     const d = new Date(iso);
