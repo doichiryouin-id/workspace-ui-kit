@@ -10,6 +10,11 @@ import {
 
 const PUBLIC_PREFIXES = ["/login", "/api/auth/login"];
 
+/** Cron は cookie 不要。秘密鍵はルート側で検証する。 */
+function isCronApiPath(pathname: string): boolean {
+  return pathname.startsWith("/api/cron/");
+}
+
 export async function middleware(request: NextRequest) {
   if (!isAccessProtectionEnabled()) {
     return NextResponse.next();
@@ -17,6 +22,10 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return NextResponse.next();
+  }
+
+  if (isCronApiPath(pathname)) {
     return NextResponse.next();
   }
 

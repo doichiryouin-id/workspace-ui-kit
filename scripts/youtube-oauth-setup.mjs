@@ -4,7 +4,8 @@
  *
  * 事前準備（Google Cloud Console）:
  * 1. YouTube Data API v3 / Analytics API / Reporting API を有効化
- * 2. OAuth 同意画面（外部）+ テストユーザーにチャンネル所有者を追加
+ * 2. OAuth 同意画面（外部）→ Publishing status を **In production** にする
+ *    （Testing のままだと refresh token が約7日で失効する）
  * 3. OAuth クライアント（Web アプリ）を作成
  *    - リダイレクト URI: https://developers.google.com/oauthplayground
  *

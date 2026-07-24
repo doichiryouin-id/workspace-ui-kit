@@ -46,7 +46,25 @@ export async function refreshYouTubeAccessToken(
   });
 
   if (!res.ok) {
-    throw new Error("YouTube OAuth トークンの更新に失敗しました");
+    let detail = "";
+    try {
+      const errJson = (await res.json()) as {
+        error?: string;
+        error_description?: string;
+      };
+      detail = errJson.error_description || errJson.error || "";
+    } catch {
+      /* ignore */
+    }
+    const hint =
+      detail.includes("expired") ||
+      detail.includes("revoked") ||
+      detail === "invalid_grant"
+        ? "（Consent が Testing だと refresh token は約7日で失効。In production にして再発行してください — docs/YOUTUBE-ANALYTICS-SETUP.md）"
+        : "";
+    throw new Error(
+      `YouTube OAuth トークンの更新に失敗しました${detail ? `: ${detail}` : ""}${hint ? ` ${hint}` : ""}`,
+    );
   }
 
   const json = (await res.json()) as { access_token?: string };
